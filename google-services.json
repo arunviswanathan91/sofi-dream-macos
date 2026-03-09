@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "761628371853",
+    "project_id": "sofi-dream",
+    "storage_bucket": "sofi-dream.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761628371853:android:badbc3792c947b9b9c6bc4",
+        "android_client_info": {
+          "package_name": "sofi.dream"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkkbjUAd4RDzFfRglXjgL3-w92GYnFqcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
