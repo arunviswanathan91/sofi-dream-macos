@@ -2,6 +2,7 @@
   "expo": {
     "name": "Sofi Dream",
     "slug": "sofi-dream",
+    "owner": "arunviswanathan91",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -69,7 +70,6 @@
     },
     "cli": {
       "appVersionSource": "remote"
-    },
-    "owner": "arunviswanathan91"
+    }
   }
 }
