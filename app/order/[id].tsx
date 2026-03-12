@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Modal,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useOrders } from '../../hooks/useOrders';
@@ -36,6 +39,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { orders, advanceStatus, togglePaid, deleteOrder } = useOrders();
   const { scheduleForOrder, cancelForOrder } = useNotifications();
 
@@ -316,7 +320,7 @@ export default function OrderDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: insets.bottom + 60 }} />
       </ScrollView>
 
       {/* Ship Modal */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '../lib/firebase';
 import {
   registerForPushNotifications,
   scheduleOrderNotifications,
@@ -9,6 +9,7 @@ import {
   scheduleWeeklySummary,
   sendTestNotification,
 } from '../lib/notifications';
+import { getLocalNotifPrefs, saveLocalNotifPrefs } from '../lib/localStore';
 import { DEFAULT_NOTIFICATION_PREFS } from '../types';
 import type { NotificationPrefs, Order } from '../types';
 
@@ -18,26 +19,39 @@ export function useNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Register for push notifications
     registerForPushNotifications().then(setPushToken);
 
-    // Listen to notification prefs from Firestore
-    const docRef = doc(db, 'settings', 'notifications');
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setPrefs(snapshot.data() as NotificationPrefs);
-      }
-      setLoading(false);
-    });
+    if (!isFirebaseConfigured) {
+      getLocalNotifPrefs().then((p) => {
+        setPrefs(p);
+        setLoading(false);
+      });
+      return;
+    }
 
+    const docRef = doc(db, 'settings', 'notifications');
+    const unsubscribe = onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) setPrefs({ ...DEFAULT_NOTIFICATION_PREFS, ...(snap.data() as Partial<NotificationPrefs>) });
+        setLoading(false);
+      },
+      () => {
+        getLocalNotifPrefs().then((p) => { setPrefs(p); setLoading(false); });
+      }
+    );
     return unsubscribe;
   }, []);
 
   const updatePrefs = useCallback(async (updates: Partial<NotificationPrefs>): Promise<void> => {
-    const docRef = doc(db, 'settings', 'notifications');
     const newPrefs = { ...prefs, ...updates };
-    await setDoc(docRef, newPrefs, { merge: true });
     setPrefs(newPrefs);
+    await saveLocalNotifPrefs(newPrefs);
+    if (isFirebaseConfigured) {
+      try {
+        await setDoc(doc(db, 'settings', 'notifications'), newPrefs, { merge: true });
+      } catch { /* non-critical */ }
+    }
   }, [prefs]);
 
   const scheduleForOrder = useCallback(

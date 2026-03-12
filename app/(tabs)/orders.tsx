@@ -8,6 +8,8 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -174,6 +176,7 @@ export default function OrdersScreen() {
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
         />
       )}
 
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   loadingContainer: {
     flex: 1,

@@ -1,573 +1,199 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Platform,
-  Modal,
+  View, Text, TextInput, ScrollView, StyleSheet, SafeAreaView,
+  TouchableOpacity, Switch, Alert, KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { useOrders } from '../../hooks/useOrders';
 import { useCategories } from '../../hooks/useCategories';
 import { TagChip } from '../../components/TagChip';
 import { Colors, Spacing, BorderRadius } from '../../lib/theme';
 
-const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF'];
-const PRESET_TAGS = ['rush', 'custom', 'gift', 'large', 'repeat customer', 'wholesale'];
+const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF', 'INR'];
+const PRESET_TAGS = ['rush', 'custom', 'gift', 'large', 'repeat customer'];
+
+interface FormState {
+  orderName: string; description: string; craftCategory: string;
+  tags: string[]; photos: string[]; sourceLink: string;
+  customerName: string; customerAddress: string; customerPhone: string;
+  customerInstagram: string; deliveryTime: string; askingPrice: string;
+  currency: string; isPaid: boolean; paymentNotes: string;
+  dueDateText: string; internalNotes: string;
+}
+
+const INITIAL: FormState = {
+  orderName: '', description: '', craftCategory: '', tags: [], photos: [],
+  sourceLink: '', customerName: '', customerAddress: '', customerPhone: '',
+  customerInstagram: '', deliveryTime: '', askingPrice: '', currency: 'EUR',
+  isPaid: false, paymentNotes: '',
+  dueDateText: format(addDays(new Date(), 7), 'yyyy-MM-dd'), internalNotes: '',
+};
 
 export default function NewOrderScreen() {
   const router = useRouter();
   const { addOrder } = useOrders();
   const { categories } = useCategories();
-
-  // Form state
-  const [orderName, setOrderName] = useState('');
-  const [description, setDescription] = useState('');
-  const [craftCategory, setCraftCategory] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [form, setForm] = useState<FormState>(INITIAL);
   const [customTag, setCustomTag] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [sourceLink, setSourceLink] = useState('');
-
-  const [customerName, setCustomerName] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerInstagram, setCustomerInstagram] = useState('');
-  const [deliveryTime, setDeliveryTime] = useState('');
-
-  const [askingPrice, setAskingPrice] = useState('');
-  const [currency, setCurrency] = useState('EUR');
-  const [isPaid, setIsPaid] = useState(false);
-  const [paymentNotes, setPaymentNotes] = useState('');
-
-  const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
-  const [dueDateText, setDueDateText] = useState(format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'));
-  const [internalNotes, setInternalNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const handleAddTag = (tag: string) => {
+  const set = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => {
+    setForm((p) => ({ ...p, [key]: val }));
+  }, []);
+
+  const addTag = useCallback((tag: string) => {
     const t = tag.trim().toLowerCase();
-    if (t && !tags.includes(t)) {
-      setTags([...tags, t]);
-    }
-  };
+    if (t) setForm((p) => ({ ...p, tags: p.tags.includes(t) ? p.tags : [...p.tags, t] }));
+  }, []);
 
-  const handlePickPhoto = async () => {
-    if (photos.length >= 5) {
-      Alert.alert('Max photos', 'You can attach up to 5 photos.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPhotos([...photos, result.assets[0].uri]);
-    }
-  };
+  const pickPhoto = useCallback(async () => {
+    if (form.photos.length >= 5) { Alert.alert('Max 5 photos'); return; }
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+    if (!r.canceled && r.assets[0]) set('photos', [...form.photos, r.assets[0].uri]);
+  }, [form.photos, set]);
 
-  const parseDueDate = (text: string) => {
-    const parsed = new Date(text);
-    if (!isNaN(parsed.getTime())) {
-      setDueDate(parsed);
-    }
-    setDueDateText(text);
-  };
+  const parsedDue = (() => { const d = new Date(form.dueDateText); return isNaN(d.getTime()) ? addDays(new Date(), 7) : d; })();
 
-  const handleSave = async () => {
-    if (!orderName.trim()) {
-      Alert.alert('Required', 'Please enter an order name.');
-      return;
-    }
-    if (!customerName.trim()) {
-      Alert.alert('Required', 'Please enter a customer name.');
-      return;
-    }
-
+  const save = useCallback(async () => {
+    Keyboard.dismiss();
+    if (!form.orderName.trim()) { Alert.alert('Required', 'Order name is required.'); return; }
+    if (!form.customerName.trim()) { Alert.alert('Required', 'Customer name is required.'); return; }
     setSaving(true);
     try {
       const id = await addOrder({
-        orderName: orderName.trim(),
-        description: description.trim(),
-        craftCategory: craftCategory.trim(),
-        tags,
-        photos,
-        sourceLink: sourceLink.trim() || undefined,
-        customerName: customerName.trim(),
-        customerAddress: customerAddress.trim(),
-        deliveryTime: deliveryTime.trim(),
-        customerPhone: customerPhone.trim() || undefined,
-        customerInstagram: customerInstagram.trim() || undefined,
-        askingPrice: parseFloat(askingPrice) || 0,
-        currency,
-        isPaid,
-        paymentNotes: paymentNotes.trim() || undefined,
-        dueDate,
-        internalNotes: internalNotes.trim() || undefined,
+        orderName: form.orderName.trim(), description: form.description.trim(),
+        craftCategory: form.craftCategory, tags: form.tags, photos: form.photos,
+        sourceLink: form.sourceLink.trim() || undefined,
+        customerName: form.customerName.trim(), customerAddress: form.customerAddress.trim(),
+        deliveryTime: form.deliveryTime.trim(), customerPhone: form.customerPhone.trim() || undefined,
+        customerInstagram: form.customerInstagram.trim() || undefined,
+        askingPrice: parseFloat(form.askingPrice) || 0, currency: form.currency,
+        isPaid: form.isPaid, paymentNotes: form.paymentNotes.trim() || undefined,
+        dueDate: parsedDue, internalNotes: form.internalNotes.trim() || undefined,
       });
-
       router.replace(`/order/${id}`);
     } catch (e) {
-      Alert.alert('Error', 'Failed to save order. Please try again.');
+      Alert.alert('Error', `Could not save: ${(e as Error).message}`);
       setSaving(false);
     }
-  };
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <View style={styles.formSection}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
-  );
-
-  const Field = ({
-    label,
-    children,
-  }: {
-    label: string;
-    children: React.ReactNode;
-  }) => (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {children}
-    </View>
-  );
+  }, [form, parsedDue, addOrder, router]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>← Cancel</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Order</Text>
-        <TouchableOpacity
-          onPress={handleSave}
-          style={[styles.saveButton, saving && { opacity: 0.6 }]}
-          disabled={saving}
-        >
-          <Text style={styles.saveText}>{saving ? 'Saving...' : 'Save'}</Text>
+    <SafeAreaView style={s.container}>
+      <View style={s.header}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12}><Text style={s.cancel}>Cancel</Text></TouchableOpacity>
+        <Text style={s.headerTitle}>New Order</Text>
+        <TouchableOpacity onPress={save} style={[s.saveBtn, saving && { opacity: 0.5 }]} disabled={saving}>
+          <Text style={s.saveTxt}>{saving ? 'Saving…' : 'Save'}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Section 1: Order Details */}
-        <Section title="Order Details">
-          <Field label="Order Name *">
-            <TextInput
-              style={styles.input}
-              value={orderName}
-              onChangeText={setOrderName}
-              placeholder="e.g. Floral Hoodie Set"
-              placeholderTextColor={Colors.muted}
-            />
-          </Field>
-          <Field label="Description">
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Describe the order details..."
-              placeholderTextColor={Colors.muted}
-              multiline
-              numberOfLines={3}
-            />
-          </Field>
-          <Field label="Craft Category">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-              {categories.map((cat) => (
-                <TagChip
-                  key={cat.id}
-                  label={`${cat.emoji} ${cat.name}`}
-                  selected={craftCategory === cat.name}
-                  onPress={() => setCraftCategory(cat.name === craftCategory ? '' : cat.name)}
-                  color={craftCategory === cat.name ? cat.color : undefined}
-                />
-              ))}
-            </ScrollView>
-          </Field>
-          <Field label="Tags">
-            <View style={styles.tagsContainer}>
-              {tags.map((tag) => (
-                <TagChip
-                  key={tag}
-                  label={tag}
-                  onRemove={() => setTags(tags.filter((t) => t !== tag))}
-                />
-              ))}
-              {PRESET_TAGS.filter((t) => !tags.includes(t)).map((tag) => (
-                <TagChip
-                  key={tag}
-                  label={`+ ${tag}`}
-                  onPress={() => handleAddTag(tag)}
-                />
-              ))}
-            </View>
-            <View style={styles.customTagRow}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                value={customTag}
-                onChangeText={setCustomTag}
-                placeholder="Custom tag..."
-                placeholderTextColor={Colors.muted}
-                onSubmitEditing={() => {
-                  handleAddTag(customTag);
-                  setCustomTag('');
-                }}
-              />
-              <TouchableOpacity
-                style={styles.addTagButton}
-                onPress={() => {
-                  handleAddTag(customTag);
-                  setCustomTag('');
-                }}
-              >
-                <Text style={styles.addTagText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </Field>
-          <Field label={`Photos (${photos.length}/5)`}>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
-              <Text style={styles.photoButtonText}>
-                {photos.length === 0 ? '📎 Attach photos' : `📎 ${photos.length} photo(s) attached — Add more`}
-              </Text>
-            </TouchableOpacity>
-          </Field>
-          <Field label="Source Link (optional)">
-            <TextInput
-              style={styles.input}
-              value={sourceLink}
-              onChangeText={setSourceLink}
-              placeholder="Instagram/WhatsApp conversation link"
-              placeholderTextColor={Colors.muted}
-              autoCapitalize="none"
-            />
-          </Field>
-        </Section>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
 
-        {/* Section 2: Customer */}
-        <Section title="Customer Info">
-          <Field label="Customer Name *">
-            <TextInput
-              style={styles.input}
-              value={customerName}
-              onChangeText={setCustomerName}
-              placeholder="Emma Kowalski"
-              placeholderTextColor={Colors.muted}
-            />
-          </Field>
-          <Field label="Address">
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={customerAddress}
-              onChangeText={setCustomerAddress}
-              placeholder="Street, City, Country"
-              placeholderTextColor={Colors.muted}
-              multiline
-              numberOfLines={2}
-            />
-          </Field>
-          <Field label="Phone (optional)">
-            <TextInput
-              style={styles.input}
-              value={customerPhone}
-              onChangeText={setCustomerPhone}
-              placeholder="+49 123 456789"
-              placeholderTextColor={Colors.muted}
-              keyboardType="phone-pad"
-            />
-          </Field>
-          <Field label="Instagram (optional)">
-            <TextInput
-              style={styles.input}
-              value={customerInstagram}
-              onChangeText={setCustomerInstagram}
-              placeholder="@username"
-              placeholderTextColor={Colors.muted}
-              autoCapitalize="none"
-            />
-          </Field>
-          <Field label="Delivery Time">
-            <TextInput
-              style={styles.input}
-              value={deliveryTime}
-              onChangeText={setDeliveryTime}
-              placeholder="e.g. 3:00 PM"
-              placeholderTextColor={Colors.muted}
-            />
-          </Field>
-        </Section>
+          <Block title="Order Details">
+            <F label="Order Name *"><TextInput style={s.input} value={form.orderName} onChangeText={(v) => set('orderName', v)} placeholder="e.g. Floral Hoodie Set" placeholderTextColor={Colors.muted} /></F>
+            <F label="Description"><TextInput style={[s.input, s.multi]} value={form.description} onChangeText={(v) => set('description', v)} placeholder="Describe the order…" placeholderTextColor={Colors.muted} multiline numberOfLines={3} textAlignVertical="top" /></F>
 
-        {/* Section 3: Financials */}
-        <Section title="Financials">
-          <Field label="Asking Price">
-            <View style={styles.priceRow}>
-              <View style={styles.currencySelector}>
+            <F label="Craft Category">
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                {categories.map((cat) => (
+                  <TagChip key={cat.id} label={`${cat.emoji} ${cat.name}`}
+                    selected={form.craftCategory === cat.name}
+                    onPress={() => set('craftCategory', form.craftCategory === cat.name ? '' : cat.name)}
+                    color={form.craftCategory === cat.name ? cat.color : undefined} />
+                ))}
+              </ScrollView>
+            </F>
+
+            <F label="Tags">
+              <View style={s.tagsWrap}>
+                {form.tags.map((t) => <TagChip key={t} label={t} onRemove={() => set('tags', form.tags.filter((x) => x !== t))} />)}
+                {PRESET_TAGS.filter((t) => !form.tags.includes(t)).map((t) => <TagChip key={t} label={`+ ${t}`} onPress={() => addTag(t)} />)}
+              </View>
+              <View style={s.row}>
+                <TextInput style={[s.input, { flex: 1 }]} value={customTag} onChangeText={setCustomTag} placeholder="Custom tag…" placeholderTextColor={Colors.muted} returnKeyType="done" onSubmitEditing={() => { addTag(customTag); setCustomTag(''); }} />
+                <TouchableOpacity style={s.addBtn} onPress={() => { addTag(customTag); setCustomTag(''); }}><Text style={s.addTxt}>Add</Text></TouchableOpacity>
+              </View>
+            </F>
+
+            <F label={`Photos (${form.photos.length}/5)`}>
+              <TouchableOpacity style={s.photoBtn} onPress={pickPhoto}><Text style={s.photoBtnTxt}>{form.photos.length === 0 ? '📎  Attach photos' : `📎  ${form.photos.length} attached — add more`}</Text></TouchableOpacity>
+            </F>
+            <F label="Source Link (optional)"><TextInput style={s.input} value={form.sourceLink} onChangeText={(v) => set('sourceLink', v)} placeholder="Instagram / WhatsApp link" placeholderTextColor={Colors.muted} autoCapitalize="none" keyboardType="url" /></F>
+          </Block>
+
+          <Block title="Customer Info">
+            <F label="Customer Name *"><TextInput style={s.input} value={form.customerName} onChangeText={(v) => set('customerName', v)} placeholder="Emma Kowalski" placeholderTextColor={Colors.muted} /></F>
+            <F label="Address"><TextInput style={[s.input, s.multi]} value={form.customerAddress} onChangeText={(v) => set('customerAddress', v)} placeholder="Street, City, Country" placeholderTextColor={Colors.muted} multiline numberOfLines={2} textAlignVertical="top" /></F>
+            <F label="Phone"><TextInput style={s.input} value={form.customerPhone} onChangeText={(v) => set('customerPhone', v)} placeholder="+49 123 456789" placeholderTextColor={Colors.muted} keyboardType="phone-pad" /></F>
+            <F label="Instagram"><TextInput style={s.input} value={form.customerInstagram} onChangeText={(v) => set('customerInstagram', v)} placeholder="@username" placeholderTextColor={Colors.muted} autoCapitalize="none" /></F>
+            <F label="Delivery Time"><TextInput style={s.input} value={form.deliveryTime} onChangeText={(v) => set('deliveryTime', v)} placeholder="e.g. 3:00 PM" placeholderTextColor={Colors.muted} /></F>
+          </Block>
+
+          <Block title="Financials">
+            <F label="Currency">
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                 {CURRENCIES.map((c) => (
-                  <TouchableOpacity
-                    key={c}
-                    style={[styles.currencyOption, currency === c && styles.currencyOptionActive]}
-                    onPress={() => setCurrency(c)}
-                  >
-                    <Text style={[styles.currencyText, currency === c && styles.currencyTextActive]}>
-                      {c}
-                    </Text>
+                  <TouchableOpacity key={c} style={[s.chip, form.currency === c && s.chipOn]} onPress={() => set('currency', c)}>
+                    <Text style={[s.chipTxt, form.currency === c && s.chipTxtOn]}>{c}</Text>
                   </TouchableOpacity>
                 ))}
-              </View>
-              <TextInput
-                style={[styles.input, styles.priceInput]}
-                value={askingPrice}
-                onChangeText={setAskingPrice}
-                placeholder="65.00"
-                placeholderTextColor={Colors.muted}
-                keyboardType="decimal-pad"
-              />
-            </View>
-          </Field>
-          <Field label="Payment Status">
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Paid</Text>
-              <Switch
-                value={isPaid}
-                onValueChange={setIsPaid}
-                trackColor={{ false: Colors.border, true: Colors.sage }}
-                thumbColor={Colors.white}
-              />
-            </View>
-          </Field>
-          <Field label="Payment Notes (optional)">
-            <TextInput
-              style={styles.input}
-              value={paymentNotes}
-              onChangeText={setPaymentNotes}
-              placeholder="Bank transfer, PayPal, etc."
-              placeholderTextColor={Colors.muted}
-            />
-          </Field>
-        </Section>
+              </ScrollView>
+            </F>
+            <F label="Price"><TextInput style={[s.input, s.priceInput]} value={form.askingPrice} onChangeText={(v) => set('askingPrice', v)} placeholder="0.00" placeholderTextColor={Colors.muted} keyboardType="decimal-pad" /></F>
+            <View style={s.toggleRow}><Text style={s.toggleLbl}>Already paid</Text><Switch value={form.isPaid} onValueChange={(v) => set('isPaid', v)} trackColor={{ false: Colors.border, true: Colors.sage }} thumbColor={Colors.white} /></View>
+            <F label="Payment Notes"><TextInput style={s.input} value={form.paymentNotes} onChangeText={(v) => set('paymentNotes', v)} placeholder="Bank transfer, PayPal…" placeholderTextColor={Colors.muted} /></F>
+          </Block>
 
-        {/* Section 4: Dates */}
-        <Section title="Dates & Notes">
-          <Field label="Due Date">
-            <TextInput
-              style={styles.input}
-              value={dueDateText}
-              onChangeText={parseDueDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={Colors.muted}
-            />
-            <Text style={styles.dueDatePreview}>
-              Due: {format(dueDate, 'EEEE, MMMM d, yyyy')}
-            </Text>
-          </Field>
-          <Field label="Internal Notes">
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={internalNotes}
-              onChangeText={setInternalNotes}
-              placeholder="Private notes for yourself..."
-              placeholderTextColor={Colors.muted}
-              multiline
-              numberOfLines={3}
-            />
-          </Field>
-        </Section>
+          <Block title="Dates & Notes" last>
+            <F label="Due Date (YYYY-MM-DD)">
+              <TextInput style={s.input} value={form.dueDateText} onChangeText={(v) => set('dueDateText', v)} placeholder="2025-04-15" placeholderTextColor={Colors.muted} keyboardType="numbers-and-punctuation" />
+              <Text style={s.hint}>{format(parsedDue, 'EEEE, MMMM d, yyyy')}</Text>
+            </F>
+            <F label="Internal Notes"><TextInput style={[s.input, s.multi]} value={form.internalNotes} onChangeText={(v) => set('internalNotes', v)} placeholder="Private notes…" placeholderTextColor={Colors.muted} multiline numberOfLines={3} textAlignVertical="top" /></F>
+          </Block>
 
-        <View style={{ height: 80 }} />
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.cream,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.cream,
-  },
-  backButton: {
-    padding: 4,
-  },
-  backText: {
-    fontSize: 14,
-    fontFamily: 'DMSans',
-    color: Colors.muted,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
-  },
-  saveButton: {
-    backgroundColor: Colors.rose,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: 18,
-    paddingVertical: 7,
-  },
-  saveText: {
-    color: Colors.white,
-    fontFamily: 'DMSans',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  scroll: {
-    flex: 1,
-  },
-  formSection: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
-    marginBottom: Spacing.md,
-  },
-  field: {
-    marginBottom: Spacing.md,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontFamily: 'DMSans',
-    color: Colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: Colors.warmWhite,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    fontFamily: 'DMSans',
-    fontSize: 15,
-    color: Colors.bark,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 0,
-  },
-  multiline: {
-    minHeight: 72,
-    textAlignVertical: 'top',
-    paddingTop: 10,
-  },
-  chipRow: {
-    maxHeight: 44,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.sm,
-  },
-  customTagRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'center',
-  },
-  addTagButton: {
-    backgroundColor: Colors.rose,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  addTagText: {
-    color: Colors.white,
-    fontFamily: 'DMSans',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  photoButton: {
-    backgroundColor: Colors.warmWhite,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-  },
-  photoButtonText: {
-    fontFamily: 'DMSans',
-    fontSize: 14,
-    color: Colors.rose,
-  },
-  priceRow: {
-    gap: Spacing.sm,
-  },
-  currencySelector: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: Spacing.sm,
-  },
-  currencyOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.warmWhite,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  currencyOptionActive: {
-    backgroundColor: Colors.rose,
-    borderColor: Colors.rose,
-  },
-  currencyText: {
-    fontSize: 12,
-    fontFamily: 'DMMono',
-    color: Colors.muted,
-  },
-  currencyTextActive: {
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  priceInput: {
-    fontFamily: 'DMMono',
-    fontSize: 20,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.warmWhite,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  toggleLabel: {
-    fontSize: 14,
-    fontFamily: 'DMSans',
-    color: Colors.bark,
-  },
-  dueDatePreview: {
-    fontSize: 12,
-    fontFamily: 'DMSans',
-    color: Colors.rose,
-    marginTop: 6,
-  },
+function Block({ title, children, last }: { title: string; children: React.ReactNode; last?: boolean }) {
+  return <View style={[s.block, !last && s.blockBorder]}><Text style={s.blockTitle}>{title}</Text>{children}</View>;
+}
+function F({ label, children }: { label: string; children: React.ReactNode }) {
+  return <View style={{ marginBottom: 4 }}><Text style={s.lbl}>{label}</Text>{children}</View>;
+}
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.cream },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border },
+  cancel: { fontSize: 15, fontFamily: 'DMSans', color: Colors.muted },
+  headerTitle: { fontSize: 17, fontFamily: 'PlayfairDisplay', color: Colors.bark },
+  saveBtn: { backgroundColor: Colors.rose, borderRadius: BorderRadius.full, paddingHorizontal: 16, paddingVertical: 7 },
+  saveTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 14, fontWeight: '700' },
+  block: { paddingHorizontal: Spacing.md, paddingTop: 24, paddingBottom: 8 },
+  blockBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border },
+  blockTitle: { fontSize: 17, fontFamily: 'PlayfairDisplay', color: Colors.bark, marginBottom: 16 },
+  lbl: { fontSize: 11, fontFamily: 'DMSans', color: Colors.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6, marginTop: 4 },
+  input: { backgroundColor: Colors.warmWhite, borderRadius: BorderRadius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: 'DMSans', fontSize: 15, color: Colors.bark, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginBottom: 12 },
+  multi: { minHeight: 80, paddingTop: 12 },
+  priceInput: { fontFamily: 'DMMono', fontSize: 22 },
+  tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  addBtn: { backgroundColor: Colors.rose, borderRadius: BorderRadius.md, paddingHorizontal: 16, paddingVertical: 12, justifyContent: 'center' },
+  addTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 13, fontWeight: '700' },
+  photoBtn: { borderRadius: BorderRadius.md, paddingVertical: 14, borderWidth: 1, borderColor: Colors.border, borderStyle: 'dashed', alignItems: 'center', marginBottom: 12, backgroundColor: Colors.warmWhite },
+  photoBtnTxt: { fontFamily: 'DMSans', fontSize: 14, color: Colors.rose },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: Colors.warmWhite, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginRight: 8 },
+  chipOn: { backgroundColor: Colors.rose, borderColor: Colors.rose },
+  chipTxt: { fontSize: 13, fontFamily: 'DMMono', color: Colors.muted },
+  chipTxtOn: { color: Colors.white },
+  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: Colors.warmWhite, borderRadius: BorderRadius.md, paddingHorizontal: 14, paddingVertical: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginBottom: 12 },
+  toggleLbl: { fontSize: 15, fontFamily: 'DMSans', color: Colors.bark },
+  hint: { fontSize: 12, fontFamily: 'DMSans', color: Colors.rose, marginTop: -8, marginBottom: 12 },
 });

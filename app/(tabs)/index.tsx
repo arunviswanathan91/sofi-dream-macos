@@ -6,15 +6,14 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
-import Animated, {
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../../hooks/useOrders';
 import { useReports } from '../../hooks/useReports';
+import { useProfile } from '../../hooks/useProfile';
 import { OrderCard } from '../../components/OrderCard';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { StatTile } from '../../components/StatTile';
@@ -24,14 +23,25 @@ import { Colors, Spacing, BorderRadius } from '../../lib/theme';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
+  if (hour < 5) return 'Good night';
   if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Good night';
+}
+
+/** Extract a first name from a business name, falling back to the full name */
+function firstName(name: string): string {
+  // "Sofi Dream" → "Sofi"
+  const words = name.trim().split(/\s+/);
+  return words[0] ?? name;
 }
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { orders, loading } = useOrders();
+  const { profile } = useProfile();
   const { dashboardStats } = useReports(orders, 'month');
 
   const { activeOrders, dueThisWeek, shippedCount, monthRevenue, urgentOrders } = dashboardStats;
@@ -60,7 +70,7 @@ export default function DashboardScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(0).duration(400)} style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}, Sofie ✦</Text>
+          <Text style={styles.greeting}>{getGreeting()}, {firstName(profile.name)} ✦</Text>
           <Text style={styles.date}>{format(new Date(), 'EEEE, MMMM d')}</Text>
         </Animated.View>
 
@@ -156,7 +166,7 @@ export default function DashboardScreen() {
           </Animated.View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: insets.bottom + 100 }} />
       </ScrollView>
 
       <FAB onPress={() => router.push('/order/new')} />

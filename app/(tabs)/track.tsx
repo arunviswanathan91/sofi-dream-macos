@@ -57,13 +57,24 @@ export default function TrackScreen() {
     return result;
   }, [categoryStats, revenueView]);
 
+  const [addingCategory, setAddingCategory] = useState(false);
+
   const handleAddCategory = async () => {
     if (!newName.trim()) return;
-    await addCategory({ name: newName.trim(), emoji: newEmoji, color: newColor });
-    setNewName('');
-    setNewEmoji('✦');
-    setNewColor(Colors.lilac);
-    setShowAddModal(false);
+    setAddingCategory(true);
+    try {
+      // Close modal immediately so the user sees it disappear right away
+      setShowAddModal(false);
+      await addCategory({ name: newName.trim(), emoji: newEmoji, color: newColor });
+      setNewName('');
+      setNewEmoji('✦');
+      setNewColor(Colors.lilac);
+    } catch (e) {
+      Alert.alert('Error', 'Could not add category. Please try again.');
+      setShowAddModal(true); // re-open on failure
+    } finally {
+      setAddingCategory(false);
+    }
   };
 
   const handleDeleteCategory = (cat: CraftCategory) => {
@@ -200,8 +211,8 @@ export default function TrackScreen() {
               >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAddCategory}>
-                <Text style={styles.saveText}>Add Category</Text>
+              <TouchableOpacity style={[styles.saveButton, addingCategory && { opacity: 0.6 }]} onPress={handleAddCategory} disabled={addingCategory}>
+                <Text style={styles.saveText}>{addingCategory ? 'Adding…' : 'Add Category'}</Text>
               </TouchableOpacity>
             </View>
           </View>
