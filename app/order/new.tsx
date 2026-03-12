@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Switch, Alert, KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { format, addDays } from 'date-fns';
 import { useOrders } from '../../hooks/useOrders';
@@ -34,6 +35,7 @@ const INITIAL: FormState = {
 export default function NewOrderScreen() {
   const router = useRouter();
   const { addOrder } = useOrders();
+  const insets = useSafeAreaInsets();
   const { categories } = useCategories();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [customTag, setCustomTag] = useState('');
@@ -158,6 +160,16 @@ export default function NewOrderScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+    {/* Sticky bottom save button — always visible above Android nav bar */}
+      <View style={[s.stickyBar, { paddingBottom: insets.bottom + 8 }]}>
+        <TouchableOpacity
+          onPress={save}
+          style={[s.stickySaveBtn, saving && { opacity: 0.5 }]}
+          disabled={saving}
+        >
+          <Text style={s.stickySaveTxt}>{saving ? 'Saving…' : 'Save Order'}</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -196,4 +208,7 @@ const s = StyleSheet.create({
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: Colors.warmWhite, borderRadius: BorderRadius.md, paddingHorizontal: 14, paddingVertical: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginBottom: 12 },
   toggleLbl: { fontSize: 15, fontFamily: 'DMSans', color: Colors.bark },
   hint: { fontSize: 12, fontFamily: 'DMSans', color: Colors.rose, marginTop: -8, marginBottom: 12 },
+  stickyBar: { backgroundColor: Colors.cream, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border, paddingHorizontal: Spacing.md, paddingTop: 10 },
+  stickySaveBtn: { backgroundColor: Colors.rose, borderRadius: BorderRadius.md, paddingVertical: 15, alignItems: 'center' },
+  stickySaveTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });

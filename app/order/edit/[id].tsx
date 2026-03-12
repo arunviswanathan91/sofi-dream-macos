@@ -14,6 +14,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { useOrders } from '../../../hooks/useOrders';
@@ -51,6 +52,7 @@ export default function EditOrderScreen() {
   const router = useRouter();
   const { orders, updateOrder } = useOrders();
   const { categories } = useCategories();
+  const insets = useSafeAreaInsets();
 
   const order = useMemo(() => orders.find((o) => o.id === id), [orders, id]);
 
@@ -401,6 +403,17 @@ export default function EditOrderScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Sticky bottom save button — always visible above Android nav bar */}
+      <View style={[styles.stickyBar, { paddingBottom: insets.bottom + 8 }]}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.stickySaveBtn, saving && { opacity: 0.5 }]}
+          disabled={saving}
+        >
+          <Text style={styles.stickySaveTxt}>{saving ? 'Saving…' : 'Save Changes'}</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -508,4 +521,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: { fontSize: 14, fontFamily: 'DMSans', color: Colors.bark },
   dueDatePreview: { fontSize: 12, fontFamily: 'DMSans', color: Colors.rose, marginTop: 6 },
+  stickyBar: { backgroundColor: Colors.cream, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border, paddingHorizontal: Spacing.md, paddingTop: 10 },
+  stickySaveBtn: { backgroundColor: Colors.rose, borderRadius: BorderRadius.md, paddingVertical: 15, alignItems: 'center' },
+  stickySaveTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });

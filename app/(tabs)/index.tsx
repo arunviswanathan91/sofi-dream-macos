@@ -19,7 +19,7 @@ import { CountdownTimer } from '../../components/CountdownTimer';
 import { StatTile } from '../../components/StatTile';
 import { SectionHeader } from '../../components/SectionHeader';
 import { FAB } from '../../components/FAB';
-import { Colors, Spacing, BorderRadius } from '../../lib/theme';
+import { Colors, Spacing, BorderRadius, getCurrencySymbol } from '../../lib/theme';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -96,7 +96,7 @@ export default function DashboardScreen() {
           <StatTile
             label="This Month"
             value={monthRevenue}
-            prefix="€"
+            prefix={getCurrencySymbol(profile.currency)}
             accentColor={Colors.sage}
           />
         </Animated.View>

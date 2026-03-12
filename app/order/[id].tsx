@@ -19,6 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useOrders } from '../../hooks/useOrders';
+import { useProfile } from '../../hooks/useProfile';
+import { getCurrencySymbol } from '../../lib/theme';
 import { useNotifications } from '../../hooks/useNotifications';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -41,6 +43,7 @@ export default function OrderDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { orders, advanceStatus, togglePaid, deleteOrder } = useOrders();
+  const { profile } = useProfile();
   const { scheduleForOrder, cancelForOrder } = useNotifications();
 
   const order = useMemo(() => orders.find((o) => o.id === id), [orders, id]);
@@ -69,8 +72,7 @@ export default function OrderDetailScreen() {
     ? STATUS_PIPELINE[currentStageIndex + 1]
     : null;
 
-  const currencySymbol =
-    order.currency === 'EUR' ? '€' : order.currency === 'GBP' ? '£' : '$';
+  const currencySymbol = getCurrencySymbol(order.currency);
 
   const handleAdvance = async () => {
     if (!nextStatus) return;

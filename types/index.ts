@@ -91,6 +91,8 @@ export interface BusinessProfile {
   name: string;
   tagline?: string;
   logoUrl?: string;
+  address?: string;
+  gstNumber?: string;
   currency: string;
   timezone: string;
   theme: AppTheme;

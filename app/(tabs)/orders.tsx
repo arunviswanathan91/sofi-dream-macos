@@ -22,8 +22,11 @@ import type { OrderStatus } from '../../types';
 
 type SortOption = 'dueDate' | 'createdAt' | 'price' | 'customer';
 
-const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
+type FilterValue = OrderStatus | 'all' | 'unpaid';
+
+const STATUS_FILTERS: { label: string; value: FilterValue }[] = [
   { label: 'All', value: 'all' },
+  { label: 'Unpaid', value: 'unpaid' },
   { label: 'Request', value: 'request' },
   { label: 'Accepted', value: 'accepted' },
   { label: 'Shipped', value: 'shipped' },
@@ -41,13 +44,15 @@ export default function OrdersScreen() {
   const router = useRouter();
   const { orders, loading } = useOrders();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<FilterValue>('all');
   const [sortBy, setSortBy] = useState<SortOption>('dueDate');
 
   const filtered = useMemo(() => {
     let result = [...orders];
 
-    if (statusFilter !== 'all') {
+    if (statusFilter === 'unpaid') {
+      result = result.filter((o) => !o.isPaid && o.status !== 'cancelled');
+    } else if (statusFilter !== 'all') {
       result = result.filter((o) => o.status === statusFilter);
     }
 
@@ -225,6 +230,13 @@ const styles = StyleSheet.create({
   filterChipActive: {
     backgroundColor: Colors.rose,
     borderColor: Colors.rose,
+  },
+  filterChipUnpaid: {
+    borderColor: Colors.coral,
+  },
+  filterChipUnpaidActive: {
+    backgroundColor: Colors.coral,
+    borderColor: Colors.coral,
   },
   filterLabel: {
     fontSize: 12,

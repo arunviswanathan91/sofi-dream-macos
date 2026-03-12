@@ -5,60 +5,38 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Colors } from '../lib/theme';
+import { OrdersProvider } from '../context/OrdersContext';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+// Inner layout reads theme colors
+function InnerLayout() {
   const router = useRouter();
+  const { colors } = useTheme();
 
-  // Fonts load gracefully — if they fail (e.g. invalid TTF), the app falls back to system fonts
-  const [fontsLoaded, fontError] = useFonts({
-    PlayfairDisplay: require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
-    'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
-    DMSans: require('../assets/fonts/DMSans-Regular.ttf'),
-    'DMSans-Medium': require('../assets/fonts/DMSans-Medium.ttf'),
-    'DMSans-Bold': require('../assets/fonts/DMSans-Bold.ttf'),
-    DMMono: require('../assets/fonts/DMMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    // Hide splash whether fonts loaded successfully or not
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  // Handle notification taps → deep link to relevant screen
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as {
         screen?: string;
         orderId?: string;
       };
-
       if (data?.screen === 'OrderDetail' && data?.orderId) {
         router.push(`/order/${data.orderId}` as never);
       } else if (data?.screen === 'Reports') {
         router.push('/reports' as never);
       }
     });
-
     return () => subscription.remove();
   }, [router]);
 
-  // Don't render until fonts are resolved (either loaded or errored)
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
     <>
-      <StatusBar style="dark" backgroundColor={Colors.cream} />
+      <StatusBar style={colors.isDark ? 'light' : 'dark'} backgroundColor={colors.header} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.cream },
+          contentStyle: { backgroundColor: colors.bg },
           animation: 'slide_from_right',
         }}
       >
@@ -71,5 +49,34 @@ export default function RootLayout() {
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlayfairDisplay: require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
+    'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
+    DMSans: require('../assets/fonts/DMSans-Regular.ttf'),
+    'DMSans-Medium': require('../assets/fonts/DMSans-Medium.ttf'),
+    'DMSans-Bold': require('../assets/fonts/DMSans-Bold.ttf'),
+    DMMono: require('../assets/fonts/DMMono-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
+  return (
+    <ThemeProvider>
+      <OrdersProvider>
+        <InnerLayout />
+      </OrdersProvider>
+    </ThemeProvider>
   );
 }

@@ -13,6 +13,9 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useOrders } from '../../hooks/useOrders';
+import { useProfile } from '../../hooks/useProfile';
+import * as FileSystem from 'expo-file-system';
+import { getCurrencySymbol } from '../../lib/theme';
 import { useReports } from '../../hooks/useReports';
 import { RevenueLineChart, RevenueByCategoryChart } from '../../components/EarningsChart';
 import { StatTile } from '../../components/StatTile';
@@ -28,6 +31,8 @@ const PERIOD_OPTIONS: { label: string; value: ReportPeriod }[] = [
 
 export default function ReportsScreen() {
   const { orders } = useOrders();
+  const { profile } = useProfile();
+  const symbol = getCurrencySymbol(profile.currency);
   const [period, setPeriod] = useState<ReportPeriod>('month');
   const [exporting, setExporting] = useState(false);
   const { report } = useReports(orders, period);
@@ -35,11 +40,11 @@ export default function ReportsScreen() {
   const handleExportPDF = async () => {
     setExporting(true);
     try {
-      const html = generateMonthlyReportHTML(report, orders, 'Sofi Dream');
+      const html = generateMonthlyReportHTML(report, orders, profile.name);
       const { uri } = await Print.printToFileAsync({ html, base64: false });
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
-        dialogTitle: `Sofi Dream — ${format(new Date(), 'MMMM yyyy')} Report`,
+        dialogTitle: `${profile.name} — ${format(new Date(), 'MMMM yyyy')} Report`,
         UTI: 'com.adobe.pdf',
       });
     } catch (e) {
@@ -52,28 +57,27 @@ export default function ReportsScreen() {
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      const headers = ['Order Name', 'Customer', 'Category', 'Due Date', 'Price', 'Currency', 'Status', 'Paid'];
+      const headers = ['Order Name', 'Customer', 'Category', 'Due Date', 'Price', 'Currency', 'Status', 'Paid', 'Tags', 'Internal Notes'];
+      const escapeCSV = (val: string) => `"${String(val ?? '').replace(/"/g, '""')}"`;
       const rows = orders.map((o) => [
-        o.orderName,
-        o.customerName,
-        o.craftCategory,
+        escapeCSV(o.orderName),
+        escapeCSV(o.customerName),
+        escapeCSV(o.craftCategory),
         format(new Date(o.dueDate), 'yyyy-MM-dd'),
         o.askingPrice.toFixed(2),
         o.currency,
         o.status,
         o.isPaid ? 'Yes' : 'No',
+        escapeCSV(o.tags.join('; ')),
+        escapeCSV(o.internalNotes ?? ''),
       ]);
       const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
-
-      const { uri } = await Print.printToFileAsync({
-        html: `<pre>${csv}</pre>`,
-        base64: false,
-      });
-
-      const csvUri = uri.replace('.pdf', '.csv');
-      await Sharing.shareAsync(uri, {
+      const fileName = `${FileSystem.documentDirectory}sofi-orders-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      await FileSystem.writeAsStringAsync(fileName, csv, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(fileName, {
         mimeType: 'text/csv',
-        dialogTitle: 'Export Orders CSV',
+        dialogTitle: `${profile.name} — Orders Export`,
+        UTI: 'public.comma-separated-values-text',
       });
     } catch (e) {
       Alert.alert('Error', 'Failed to export CSV.');
@@ -104,15 +108,15 @@ export default function ReportsScreen() {
 
         {/* Summary Stats */}
         <View style={styles.statsRow}>
-          <StatTile label="Revenue" value={report.totalRevenue} prefix="€" accentColor={Colors.rose} />
+          <StatTile label="Revenue" value={report.totalRevenue} prefix={symbol} accentColor={Colors.rose} />
           <StatTile label="Completed" value={report.ordersCompleted} accentColor={Colors.sage} />
-          <StatTile label="Avg Value" value={report.averageOrderValue} prefix="€" accentColor={Colors.gold} />
+          <StatTile label="Avg Value" value={report.averageOrderValue} prefix={symbol} accentColor={Colors.gold} />
         </View>
 
         <View style={styles.statsRow}>
           <StatTile label="Accepted" value={report.ordersAccepted} accentColor={Colors.sky} />
           <StatTile label="Shipped" value={report.ordersShipped} accentColor={Colors.lilac} />
-          <StatTile label="Unpaid" value={report.unpaidTotal} prefix="€" accentColor={Colors.coral} />
+          <StatTile label="Unpaid" value={report.unpaidTotal} prefix={symbol} accentColor={Colors.coral} />
         </View>
 
         {/* Top Stats */}
@@ -130,7 +134,7 @@ export default function ReportsScreen() {
                 <View style={styles.highlightRow}>
                   <Text style={styles.highlightLabel}>Top Customer</Text>
                   <Text style={styles.highlightValue}>
-                    {report.topCustomer.name} · €{report.topCustomer.spent.toFixed(2)}
+                    {report.topCustomer.name} · {symbol}{report.topCustomer.spent.toFixed(2)}
                   </Text>
                 </View>
               ) : null}

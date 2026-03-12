@@ -7,14 +7,15 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useProfile } from '../../hooks/useProfile';
+import { useTheme } from '../../context/ThemeContext';
 import { Colors, Spacing, BorderRadius } from '../../lib/theme';
 import type { AppTheme } from '../../types';
 
-const THEMES: { label: string; value: AppTheme; bg: string; text: string }[] = [
-  { label: 'Warm Cream', value: 'warm-cream', bg: '#FAF7F2', text: '#3D2B1F' },
-  { label: 'Dark Walnut', value: 'dark-walnut', bg: '#2A1F17', text: '#F5EDE3' },
-  { label: 'Soft Sage', value: 'soft-sage', bg: '#EAF0EA', text: '#2D402D' },
-  { label: 'Lavender', value: 'lavender', bg: '#F0EAF8', text: '#3D2D52' },
+const THEMES: { label: string; value: AppTheme; bg: string; text: string; desc: string }[] = [
+  { label: 'Warm Cream', value: 'warm-cream', bg: '#FAF7F2', text: '#3D2B1F', desc: 'Default warm tone' },
+  { label: 'Dark Walnut', value: 'dark-walnut', bg: '#2A1F17', text: '#F5EDE3', desc: 'Dark, rich brown' },
+  { label: 'Soft Sage', value: 'soft-sage', bg: '#EAF0EA', text: '#2D402D', desc: 'Calm green' },
+  { label: 'Lavender', value: 'lavender', bg: '#F0EAF8', text: '#3D2D52', desc: 'Gentle purple' },
 ];
 
 const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF', 'INR', 'SEK', 'PLN'];
@@ -24,9 +25,12 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { prefs, updatePrefs, testNotification } = useNotifications();
   const { profile, saveProfile } = useProfile();
+  const { theme: activeTheme, setTheme: setGlobalTheme } = useTheme();
 
   const [name, setName] = useState(profile.name);
   const [tagline, setTagline] = useState(profile.tagline ?? '');
+  const [address, setAddress] = useState(profile.address ?? '');
+  const [gstNumber, setGstNumber] = useState(profile.gstNumber ?? '');
   const [currency, setCurrency] = useState(profile.currency);
   const [theme, setTheme] = useState<AppTheme>(profile.theme);
   const [saving, setSaving] = useState(false);
@@ -35,14 +39,24 @@ export default function SettingsScreen() {
   useEffect(() => {
     setName(profile.name);
     setTagline(profile.tagline ?? '');
+    setAddress(profile.address ?? '');
+    setGstNumber(profile.gstNumber ?? '');
     setCurrency(profile.currency);
     setTheme(profile.theme);
-  }, [profile.name, profile.tagline, profile.currency, profile.theme]);
+  }, [profile.name, profile.tagline, profile.address, profile.gstNumber, profile.currency, profile.theme]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveProfile({ name: name.trim() || 'Sofi Dream', tagline: tagline.trim(), currency, theme, timezone: profile.timezone });
+      await saveProfile({
+        name: name.trim() || 'Sofi Dream',
+        tagline: tagline.trim(),
+        address: address.trim() || undefined,
+        gstNumber: gstNumber.trim() || undefined,
+        currency,
+        theme,
+        timezone: profile.timezone,
+      });
       Alert.alert('Saved', 'Your profile has been updated.');
     } catch (e) {
       Alert.alert('Error', 'Failed to save. Please try again.');
@@ -53,7 +67,7 @@ export default function SettingsScreen() {
 
   const handleThemeSelect = async (t: AppTheme) => {
     setTheme(t);
-    // Persist immediately so the greeting + other screens see it
+    setGlobalTheme(t); // Apply instantly to entire app
     await saveProfile({ ...profile, theme: t });
   };
 
@@ -73,8 +87,21 @@ export default function SettingsScreen() {
             <TextInput style={s.input} value={name} onChangeText={setName} placeholder="Your business name" placeholderTextColor={Colors.muted} />
             <Lbl>Tagline</Lbl>
             <TextInput style={s.input} value={tagline} onChangeText={setTagline} placeholder="Handmade with love ✦" placeholderTextColor={Colors.muted} />
+            <Lbl>Business Address (for invoices)</Lbl>
+            <TextInput
+              style={[s.input, s.multiline]}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Street, City, Country"
+              placeholderTextColor={Colors.muted}
+              multiline
+              numberOfLines={2}
+              textAlignVertical="top"
+            />
+            <Lbl>GST / Tax Number (optional)</Lbl>
+            <TextInput style={s.input} value={gstNumber} onChangeText={setGstNumber} placeholder="e.g. 22AAAAA0000A1Z5" placeholderTextColor={Colors.muted} autoCapitalize="characters" />
             <Lbl>Default Currency</Lbl>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }} keyboardShouldPersistTaps="always">
               {CURRENCIES.map((c) => (
                 <TouchableOpacity key={c} style={[s.chip, currency === c && s.chipOn]} onPress={() => setCurrency(c)}>
                   <Text style={[s.chipTxt, currency === c && s.chipTxtOn]}>{c}</Text>
@@ -88,17 +115,20 @@ export default function SettingsScreen() {
 
           {/* App Theme */}
           <Sec title="App Theme">
-            <Text style={s.themeHint}>Tap to apply instantly</Text>
+            <Text style={s.themeHint}>Tap to apply instantly — changes the whole app</Text>
             <View style={s.themeGrid}>
               {THEMES.map((t) => (
                 <TouchableOpacity
                   key={t.value}
-                  style={[s.themeCard, { backgroundColor: t.bg }, theme === t.value && s.themeCardOn]}
+                  style={[s.themeCard, { backgroundColor: t.bg }, (theme === t.value || activeTheme === t.value) && s.themeCardOn]}
                   onPress={() => handleThemeSelect(t.value)}
                   activeOpacity={0.85}
                 >
                   <Text style={[s.themeLbl, { color: t.text }]}>{t.label}</Text>
-                  {theme === t.value && <Text style={s.themeCheck}>✓ Active</Text>}
+                  <Text style={[s.themeDesc, { color: t.text, opacity: 0.6 }]}>{t.desc}</Text>
+                  {(theme === t.value || activeTheme === t.value) && (
+                    <Text style={[s.themeCheck, { color: t.text }]}>✓ Active</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -167,6 +197,7 @@ const s = StyleSheet.create({
   card: { backgroundColor: Colors.warmWhite, borderRadius: BorderRadius.md, padding: Spacing.md, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border },
   lbl: { fontSize: 11, fontFamily: 'DMSans', color: Colors.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 5, marginTop: 4 },
   input: { backgroundColor: Colors.cream, borderRadius: BorderRadius.sm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: 'DMSans', fontSize: 15, color: Colors.bark, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginBottom: 12 },
+  multiline: { minHeight: 64, paddingTop: 12 },
   chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: Colors.cream, borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border, marginRight: 8 },
   chipOn: { backgroundColor: Colors.rose, borderColor: Colors.rose },
   chipTxt: { fontSize: 13, fontFamily: 'DMMono', color: Colors.muted },
@@ -175,10 +206,11 @@ const s = StyleSheet.create({
   saveTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 14, fontWeight: '700' },
   themeHint: { fontSize: 12, fontFamily: 'DMSans', color: Colors.muted, marginBottom: 12 },
   themeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  themeCard: { width: '47%', height: 72, borderRadius: BorderRadius.md, padding: 12, justifyContent: 'space-between', borderWidth: 2, borderColor: 'transparent' },
+  themeCard: { width: '47%', height: 80, borderRadius: BorderRadius.md, padding: 12, justifyContent: 'space-between', borderWidth: 2, borderColor: 'transparent' },
   themeCardOn: { borderColor: Colors.rose },
   themeLbl: { fontSize: 13, fontFamily: 'DMSans', fontWeight: '600' },
-  themeCheck: { fontSize: 11, fontFamily: 'DMMono', color: Colors.rose },
+  themeDesc: { fontSize: 10, fontFamily: 'DMSans' },
+  themeCheck: { fontSize: 11, fontFamily: 'DMMono' },
   sRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border },
   sRowLbl: { fontSize: 14, fontFamily: 'DMSans', color: Colors.bark },
   arrow: { fontSize: 20, color: Colors.muted },

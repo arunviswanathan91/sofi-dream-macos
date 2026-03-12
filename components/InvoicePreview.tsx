@@ -3,22 +3,24 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } fr
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { generateInvoiceHTML } from '../lib/reports';
-import { Colors, Spacing, BorderRadius } from '../lib/theme';
+import { Colors, Spacing, BorderRadius, getCurrencySymbol } from '../lib/theme';
 import type { Order } from '../types';
 
 interface Props {
   order: Order;
   businessName: string;
   businessTagline?: string;
+  businessAddress?: string;
+  gstNumber?: string;
 }
 
-export function InvoicePreview({ order, businessName, businessTagline }: Props) {
+export function InvoicePreview({ order, businessName, businessTagline, businessAddress, gstNumber }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const html = generateInvoiceHTML(order, businessName, businessTagline);
+      const html = generateInvoiceHTML(order, businessName, businessTagline, undefined, businessAddress, gstNumber);
       const { uri } = await Print.printToFileAsync({ html, base64: false });
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
@@ -32,8 +34,7 @@ export function InvoicePreview({ order, businessName, businessTagline }: Props) 
     }
   };
 
-  const currencySymbol =
-    order.currency === 'EUR' ? '€' : order.currency === 'GBP' ? '£' : '$';
+  const symbol = getCurrencySymbol(order.currency);
 
   return (
     <View style={styles.container}>
@@ -49,13 +50,13 @@ export function InvoicePreview({ order, businessName, businessTagline }: Props) 
         <View style={styles.lineItem}>
           <Text style={styles.itemName}>{order.orderName}</Text>
           <Text style={styles.itemPrice}>
-            {currencySymbol}{order.askingPrice.toFixed(2)}
+            {symbol}{order.askingPrice.toFixed(2)}
           </Text>
         </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>TOTAL DUE</Text>
           <Text style={styles.totalValue}>
-            {currencySymbol}{order.askingPrice.toFixed(2)}
+            {symbol}{order.askingPrice.toFixed(2)}
           </Text>
         </View>
         <View style={styles.statusRow}>
@@ -94,9 +95,7 @@ export function InvoicePreview({ order, businessName, businessTagline }: Props) 
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.md,
-  },
+  container: { gap: Spacing.md },
   preview: {
     backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
