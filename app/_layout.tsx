@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { OrdersProvider } from '../context/OrdersContext';
+import { ProfileProvider } from '../context/ProfileContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
@@ -38,15 +39,16 @@ function InnerLayout() {
           headerShown: false,
           contentStyle: { backgroundColor: colors.bg },
           animation: 'slide_from_right',
+          gestureEnabled: true,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="order/new" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="order/new" options={{ presentation: 'modal', headerShown: false, animation: 'fade_from_bottom' }} />
         <Stack.Screen name="order/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="order/edit/[id]" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="order/edit/[id]" options={{ presentation: 'modal', headerShown: false, animation: 'fade_from_bottom' }} />
         <Stack.Screen name="customers/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="reports/index" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ presentation: 'modal', headerShown: false, animation: 'fade_from_bottom' }} />
       </Stack>
     </>
   );
@@ -75,7 +77,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <OrdersProvider>
-        <InnerLayout />
+        <ProfileProvider>
+          <InnerLayout />
+        </ProfileProvider>
       </OrdersProvider>
     </ThemeProvider>
   );
