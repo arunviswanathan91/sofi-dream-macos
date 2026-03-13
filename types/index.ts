@@ -32,6 +32,7 @@ export interface Order {
   status: OrderStatus;
   shipmentId?: string;
   carrier?: string;
+  invoiceNumber?: string;
 
   // Categorization
   tags: string[];

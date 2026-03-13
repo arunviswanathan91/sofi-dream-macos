@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   Image,
@@ -14,12 +13,14 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useOrders } from '../../hooks/useOrders';
 import { useProfile } from '../../hooks/useProfile';
+import { useTheme } from '../../context/ThemeContext';
 import { getCurrencySymbol } from '../../lib/theme';
 import { useNotifications } from '../../hooks/useNotifications';
 import { CountdownTimer } from '../../components/CountdownTimer';
@@ -44,6 +45,7 @@ export default function OrderDetailScreen() {
   const insets = useSafeAreaInsets();
   const { orders, advanceStatus, togglePaid, deleteOrder } = useOrders();
   const { profile } = useProfile();
+  const { colors } = useTheme();
   const { scheduleForOrder, cancelForOrder } = useNotifications();
 
   const order = useMemo(() => orders.find((o) => o.id === id), [orders, id]);
@@ -56,9 +58,9 @@ export default function OrderDetailScreen() {
 
   if (!order) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Order not found</Text>
+          <Text style={[styles.notFoundText, { color: colors.subText }]}>Order not found</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backLink}>Go back</Text>
           </TouchableOpacity>
@@ -133,13 +135,13 @@ export default function OrderDetailScreen() {
   const isActive = ['request', 'accepted'].includes(order.status);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={[styles.backText, { color: colors.subText }]}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
             {order.orderName}
           </Text>
         </View>
@@ -177,7 +179,7 @@ export default function OrderDetailScreen() {
         </Animated.View>
 
         {/* Status Pipeline */}
-        <Animated.View entering={FadeInDown.delay(100).duration(300)} style={styles.pipeline}>
+        <Animated.View entering={FadeInDown.delay(100).duration(300)} style={[styles.pipeline, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           {STATUS_PIPELINE.map((s, i) => {
             const isCompleted = STATUS_PIPELINE.indexOf(order.status as OrderStatus) >= i;
             const isCurrent = order.status === s;
@@ -187,6 +189,7 @@ export default function OrderDetailScreen() {
               <View key={s} style={styles.pipelineStep}>
                 <View style={[
                   styles.pipelineDot,
+                  { backgroundColor: colors.bg, borderColor: colors.cardBorder },
                   isCompleted && { backgroundColor: color, borderColor: color },
                   isCurrent && styles.pipelineDotCurrent,
                 ]}>
@@ -194,6 +197,7 @@ export default function OrderDetailScreen() {
                 </View>
                 <Text style={[
                   styles.pipelineLabel,
+                  { color: colors.subText },
                   isCurrent && { color, fontWeight: '600' },
                 ]}>
                   {STATUS_LABELS[s]}
@@ -201,6 +205,7 @@ export default function OrderDetailScreen() {
                 {i < STATUS_PIPELINE.length - 1 && (
                   <View style={[
                     styles.pipelineLine,
+                    { backgroundColor: colors.cardBorder },
                     isCompleted && i < STATUS_PIPELINE.indexOf(order.status as OrderStatus) && { backgroundColor: color },
                   ]} />
                 )}
@@ -233,31 +238,33 @@ export default function OrderDetailScreen() {
         )}
 
         {/* Core Details */}
-        <Animated.View entering={FadeInDown.delay(150).duration(300)} style={styles.detailCard}>
-          <DetailRow label="Customer" value={order.customerName} />
-          <DetailRow label="Address" value={order.customerAddress} />
-          {order.customerPhone && <DetailRow label="Phone" value={order.customerPhone} />}
-          {order.customerInstagram && <DetailRow label="Instagram" value={order.customerInstagram} />}
-          <DetailRow label="Due Date" value={format(new Date(order.dueDate), 'EEEE, MMMM d, yyyy')} />
-          {order.deliveryTime && <DetailRow label="Delivery Time" value={order.deliveryTime} />}
+        <Animated.View entering={FadeInDown.delay(150).duration(300)} style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <DetailRow label="Customer" value={order.customerName} colors={colors} />
+          <DetailRow label="Address" value={order.customerAddress} colors={colors} />
+          {order.customerPhone && <DetailRow label="Phone" value={order.customerPhone} colors={colors} />}
+          {order.customerInstagram && <DetailRow label="Instagram" value={order.customerInstagram} colors={colors} />}
+          <DetailRow label="Due Date" value={format(new Date(order.dueDate), 'EEEE, MMMM d, yyyy')} colors={colors} />
+          {order.deliveryTime && <DetailRow label="Delivery Time" value={order.deliveryTime} colors={colors} />}
           <DetailRow
             label="Price"
             value={`${currencySymbol}${order.askingPrice.toFixed(2)}`}
-            valueStyle={{ fontFamily: 'DMMono', color: Colors.bark }}
+            valueStyle={{ fontFamily: 'DMMono', color: colors.text }}
+            colors={colors}
           />
-          <DetailRow label="Category" value={order.craftCategory || '—'} />
-          {order.shipmentId && <DetailRow label="Shipment ID" value={order.shipmentId} mono />}
-          {order.carrier && <DetailRow label="Carrier" value={order.carrier} />}
-          {order.sourceLink && <DetailRow label="Source" value={order.sourceLink} />}
-          {order.description && <DetailRow label="Description" value={order.description} multiline />}
-          {order.internalNotes && <DetailRow label="Internal Notes" value={order.internalNotes} multiline />}
-          {order.paymentNotes && <DetailRow label="Payment Notes" value={order.paymentNotes} />}
+          <DetailRow label="Category" value={order.craftCategory || '—'} colors={colors} />
+          {order.invoiceNumber && <DetailRow label="Invoice #" value={order.invoiceNumber} mono colors={colors} />}
+          {order.shipmentId && <DetailRow label="Shipment ID" value={order.shipmentId} mono colors={colors} />}
+          {order.carrier && <DetailRow label="Carrier" value={order.carrier} colors={colors} />}
+          {order.sourceLink && <DetailRow label="Source" value={order.sourceLink} colors={colors} />}
+          {order.description && <DetailRow label="Description" value={order.description} multiline colors={colors} />}
+          {order.internalNotes && <DetailRow label="Internal Notes" value={order.internalNotes} multiline colors={colors} />}
+          {order.paymentNotes && <DetailRow label="Payment Notes" value={order.paymentNotes} colors={colors} />}
         </Animated.View>
 
         {/* Tags */}
         {order.tags.length > 0 && (
           <View style={styles.tagsSection}>
-            <Text style={styles.sectionLabel}>Tags</Text>
+            <Text style={[styles.sectionLabel, { color: colors.subText }]}>Tags</Text>
             <View style={styles.tagsRow}>
               {order.tags.map((tag) => (
                 <TagChip key={tag} label={tag} />
@@ -269,7 +276,7 @@ export default function OrderDetailScreen() {
         {/* Photos */}
         {order.photos.length > 0 && (
           <View style={styles.photosSection}>
-            <Text style={styles.sectionLabel}>Photos</Text>
+            <Text style={[styles.sectionLabel, { color: colors.subText }]}>Photos</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {order.photos.map((uri, i) => (
                 <Image key={i} source={{ uri }} style={styles.photo} />
@@ -280,12 +287,12 @@ export default function OrderDetailScreen() {
 
         {/* Timeline */}
         <View style={styles.timelineSection}>
-          <Text style={styles.sectionLabel}>Timeline</Text>
-          <View style={styles.detailCard}>
-            <DetailRow label="Created" value={format(new Date(order.createdAt), 'MMM d, yyyy')} />
-            {order.acceptedAt && <DetailRow label="Accepted" value={format(new Date(order.acceptedAt), 'MMM d, yyyy')} />}
-            {order.shippedAt && <DetailRow label="Shipped" value={format(new Date(order.shippedAt), 'MMM d, yyyy')} />}
-            {order.deliveredAt && <DetailRow label="Delivered" value={format(new Date(order.deliveredAt), 'MMM d, yyyy')} />}
+          <Text style={[styles.sectionLabel, { color: colors.subText }]}>Timeline</Text>
+          <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <DetailRow label="Created" value={format(new Date(order.createdAt), 'MMM d, yyyy')} colors={colors} />
+            {order.acceptedAt && <DetailRow label="Accepted" value={format(new Date(order.acceptedAt), 'MMM d, yyyy')} colors={colors} />}
+            {order.shippedAt && <DetailRow label="Shipped" value={format(new Date(order.shippedAt), 'MMM d, yyyy')} colors={colors} />}
+            {order.deliveredAt && <DetailRow label="Delivered" value={format(new Date(order.deliveredAt), 'MMM d, yyyy')} colors={colors} />}
           </View>
         </View>
 
@@ -312,8 +319,10 @@ export default function OrderDetailScreen() {
           {showInvoice && (
             <InvoicePreview
               order={order}
-              businessName="Sofi Dream"
-              businessTagline="Handmade with love ✦"
+              businessName={profile.name}
+              businessTagline={profile.tagline}
+              businessAddress={profile.address}
+              gstNumber={profile.gstNumber}
             />
           )}
 
@@ -328,28 +337,28 @@ export default function OrderDetailScreen() {
       {/* Ship Modal */}
       <Modal visible={showShipModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Mark as Shipped</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Mark as Shipped</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
               placeholder="Shipment / Tracking ID (optional)"
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={colors.subText}
               value={shipmentId}
               onChangeText={setShipmentId}
             />
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
               placeholder="Carrier (e.g. DHL, PostNL)"
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={colors.subText}
               value={carrier}
               onChangeText={setCarrier}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancel}
+                style={[styles.modalCancel, { backgroundColor: colors.cardBorder }]}
                 onPress={() => setShowShipModal(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: colors.subText }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalConfirm} onPress={handleShipConfirm}>
                 <Text style={styles.modalConfirmText}>Mark Shipped →</Text>
@@ -368,19 +377,22 @@ function DetailRow({
   valueStyle,
   multiline,
   mono,
+  colors,
 }: {
   label: string;
   value: string;
   valueStyle?: object;
   multiline?: boolean;
   mono?: boolean;
+  colors: any;
 }) {
   return (
-    <View style={[detailStyles.row, multiline && detailStyles.rowMultiline]}>
-      <Text style={detailStyles.label}>{label}</Text>
+    <View style={[detailStyles.row, multiline && detailStyles.rowMultiline, { borderBottomColor: colors.cardBorder }]}>
+      <Text style={[detailStyles.label, { color: colors.subText }]}>{label}</Text>
       <Text
         style={[
           detailStyles.value,
+          { color: colors.text },
           mono && detailStyles.mono,
           multiline && detailStyles.valueMultiline,
           valueStyle,
@@ -398,7 +410,6 @@ const detailStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   rowMultiline: {
     flexDirection: 'column',
@@ -407,7 +418,6 @@ const detailStyles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontFamily: 'DMSans',
-    color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     flex: 1,
@@ -415,7 +425,6 @@ const detailStyles = StyleSheet.create({
   value: {
     fontSize: 14,
     fontFamily: 'DMSans',
-    color: Colors.bark,
     flex: 2,
     textAlign: 'right',
   },
@@ -432,7 +441,6 @@ const detailStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.cream,
   },
   header: {
     flexDirection: 'row',
@@ -440,7 +448,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
     gap: Spacing.sm,
   },
   backButton: {
@@ -448,7 +455,6 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 20,
-    color: Colors.muted,
   },
   headerCenter: {
     flex: 1,
@@ -456,7 +462,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
   },
   editButton: {
     padding: 4,
@@ -482,7 +487,6 @@ const styles = StyleSheet.create({
   notFoundText: {
     fontFamily: 'PlayfairDisplay',
     fontSize: 18,
-    color: Colors.muted,
   },
   backLink: {
     fontFamily: 'DMSans',
@@ -530,12 +534,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   pipelineStep: {
     alignItems: 'center',
@@ -546,9 +548,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.cream,
     borderWidth: 2,
-    borderColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -564,7 +564,6 @@ const styles = StyleSheet.create({
   pipelineLabel: {
     fontSize: 10,
     fontFamily: 'DMMono',
-    color: Colors.muted,
     textAlign: 'center',
   },
   pipelineLine: {
@@ -573,7 +572,6 @@ const styles = StyleSheet.create({
     left: '50%',
     right: '-50%',
     height: 2,
-    backgroundColor: Colors.border,
     zIndex: -1,
   },
   advanceSection: {
@@ -591,17 +589,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   detailCard: {
-    backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   sectionLabel: {
     fontSize: 12,
     fontFamily: 'DMSans',
-    color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     fontWeight: '600',
@@ -671,7 +666,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.cream,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
@@ -680,18 +674,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
   },
   modalInput: {
-    backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
     fontFamily: 'DMSans',
     fontSize: 15,
-    color: Colors.bark,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   modalActions: {
     flexDirection: 'row',
@@ -701,12 +691,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.border,
     alignItems: 'center',
   },
   modalCancelText: {
     fontFamily: 'DMSans',
-    color: Colors.muted,
     fontWeight: '600',
   },
   modalConfirm: {

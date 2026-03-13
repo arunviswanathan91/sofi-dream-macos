@@ -184,10 +184,11 @@ export function generateInvoiceHTML(
 export function generateMonthlyReportHTML(
   report: WeeklyReport,
   orders: Order[],
-  businessName: string
+  businessName: string,
+  defaultCurrency?: string
 ): string {
   const periodLabel = `${format(report.period.start, 'MMMM yyyy')} Report`;
-  const currencySymbol = getCurrencySymbol(orders[0]?.currency ?? 'EUR');
+  const currencySymbol = getCurrencySymbol(orders[0]?.currency ?? defaultCurrency ?? 'EUR');
 
   const orderRows = orders
     .filter((o) => {

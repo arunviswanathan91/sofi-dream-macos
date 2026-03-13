@@ -78,6 +78,7 @@ function orderFromFirestore(data: Record<string, unknown>, id: string): Order {
     status: (data.status as OrderStatus) ?? 'request',
     shipmentId: (data.shipmentId as string) || undefined,
     carrier: (data.carrier as string) || undefined,
+    invoiceNumber: (data.invoiceNumber as string) || undefined,
     tags: (data.tags as string[]) ?? [],
     craftCategory: (data.craftCategory as string) ?? '',
     internalNotes: (data.internalNotes as string) || undefined,
@@ -118,11 +119,16 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addOrder = useCallback(async (formData: OrderFormData): Promise<string> => {
+    const year = new Date().getFullYear();
+    const shortId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const invoiceNumber = `INV-${year}-${shortId}`;
+
     if (!isFirebaseConfigured) {
       const id = generateId();
       const order: Order = {
         ...formData,
         id,
+        invoiceNumber,
         status: 'request',
         createdAt: new Date(),
         photos: formData.photos ?? [],
@@ -136,6 +142,7 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
 
     const docRef = await addDoc(collection(db, 'orders'), {
       ...formData,
+      invoiceNumber,
       status: 'request' as OrderStatus,
       createdAt: Timestamp.fromDate(new Date()),
       dueDate: Timestamp.fromDate(new Date(formData.dueDate)),

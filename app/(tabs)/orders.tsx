@@ -5,17 +5,16 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useOrders } from '../../hooks/useOrders';
+import { useTheme } from '../../context/ThemeContext';
 import { OrderCard } from '../../components/OrderCard';
-import { TagChip } from '../../components/TagChip';
 import { FAB } from '../../components/FAB';
 import { Colors, Spacing, BorderRadius } from '../../lib/theme';
 import type { OrderStatus } from '../../types';
@@ -43,6 +42,11 @@ const SORT_OPTIONS: { label: string; value: SortOption }[] = [
 export default function OrdersScreen() {
   const router = useRouter();
   const { orders, loading } = useOrders();
+  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 600;
+  const numColumns = isTablet ? 2 : 1;
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterValue>('all');
   const [sortBy, setSortBy] = useState<SortOption>('dueDate');
@@ -85,19 +89,19 @@ export default function OrdersScreen() {
   }, [orders, search, statusFilter, sortBy]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Search */}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+      {/* Search — fixed above list */}
       <View style={styles.searchContainer}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
           placeholder="Search orders, customers, tags..."
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={colors.subText}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      {/* Status Filters */}
+      {/* Status Filters — fixed, outside scroll */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -109,6 +113,7 @@ export default function OrdersScreen() {
             key={f.value}
             style={[
               styles.filterChip,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               statusFilter === f.value && styles.filterChipActive,
             ]}
             onPress={() => setStatusFilter(f.value)}
@@ -116,6 +121,7 @@ export default function OrdersScreen() {
             <Text
               style={[
                 styles.filterLabel,
+                { color: colors.subText },
                 statusFilter === f.value && styles.filterLabelActive,
               ]}
             >
@@ -125,14 +131,14 @@ export default function OrdersScreen() {
         ))}
       </ScrollView>
 
-      {/* Sort Row */}
+      {/* Sort Row — fixed, outside scroll */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.sortRow}
         contentContainerStyle={styles.filtersContent}
       >
-        <Text style={styles.sortLabel}>Sort:</Text>
+        <Text style={[styles.sortLabel, { color: colors.subText }]}>Sort:</Text>
         {SORT_OPTIONS.map((s) => (
           <TouchableOpacity
             key={s.value}
@@ -141,6 +147,7 @@ export default function OrdersScreen() {
             <Text
               style={[
                 styles.sortOption,
+                { color: colors.subText },
                 sortBy === s.value && styles.sortOptionActive,
               ]}
             >
@@ -150,15 +157,15 @@ export default function OrdersScreen() {
         ))}
       </ScrollView>
 
-      {/* Orders List */}
+      {/* Orders List — takes all remaining flex space */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading orders...</Text>
+          <Text style={[styles.loadingText, { color: colors.subText }]}>Loading orders...</Text>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>✦</Text>
-          <Text style={styles.emptyTitle}>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
             {search ? 'No matching orders' : 'No orders yet'}
           </Text>
           {!search && (
@@ -172,16 +179,23 @@ export default function OrdersScreen() {
         </View>
       ) : (
         <FlatList
+          key={`orders-${numColumns}`}
           data={filtered}
           keyExtractor={(item) => item.id}
+          numColumns={numColumns}
           renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(index * 40).duration(300)}>
+            <Animated.View
+              entering={FadeInDown.delay(index * 40).duration(300)}
+              style={isTablet ? styles.tabletItem : undefined}
+            >
               <OrderCard order={item} />
             </Animated.View>
           )}
           contentContainerStyle={styles.listContent}
+          columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="always"
+          style={styles.list}
         />
       )}
 
@@ -193,22 +207,18 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.cream,
   },
   searchContainer: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
   },
   searchInput: {
-    backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     fontFamily: 'DMSans',
     fontSize: 14,
-    color: Colors.bark,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   filtersRow: {
     maxHeight: 44,
@@ -223,25 +233,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.warmWhite,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   filterChipActive: {
     backgroundColor: Colors.rose,
     borderColor: Colors.rose,
   },
-  filterChipUnpaid: {
-    borderColor: Colors.coral,
-  },
-  filterChipUnpaidActive: {
-    backgroundColor: Colors.coral,
-    borderColor: Colors.coral,
-  },
   filterLabel: {
     fontSize: 12,
     fontFamily: 'DMSans',
-    color: Colors.muted,
   },
   filterLabelActive: {
     color: Colors.white,
@@ -254,13 +254,11 @@ const styles = StyleSheet.create({
   sortLabel: {
     fontSize: 12,
     fontFamily: 'DMSans',
-    color: Colors.muted,
     marginRight: 4,
   },
   sortOption: {
     fontSize: 12,
     fontFamily: 'DMSans',
-    color: Colors.muted,
     marginRight: 12,
   },
   sortOptionActive: {
@@ -268,9 +266,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
+  list: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: Spacing.md,
     paddingBottom: 120,
+  },
+  columnWrapper: {
+    gap: Spacing.sm,
+  },
+  tabletItem: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -279,7 +286,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontFamily: 'DMSans',
-    color: Colors.muted,
   },
   emptyState: {
     flex: 1,
@@ -293,7 +299,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
   },
   emptyButton: {
     backgroundColor: Colors.rose,

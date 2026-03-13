@@ -6,13 +6,13 @@ import {
   endOfMonth,
   startOfQuarter,
   endOfQuarter,
-  subWeeks,
-  subMonths,
+  startOfYear,
+  endOfYear,
 } from 'date-fns';
 import { generateReport } from '../lib/reports';
 import type { Order, WeeklyReport } from '../types';
 
-export type ReportPeriod = 'week' | 'month' | 'quarter' | 'custom';
+export type ReportPeriod = 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
 export function useReports(
   orders: Order[],
@@ -37,6 +37,10 @@ export function useReports(
       case 'quarter':
         start = startOfQuarter(now);
         end = endOfQuarter(now);
+        break;
+      case 'year':
+        start = startOfYear(now);
+        end = endOfYear(now);
         break;
       case 'custom':
         start = customStart ?? startOfMonth(now);

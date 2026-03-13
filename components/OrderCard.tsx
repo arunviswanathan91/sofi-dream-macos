@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { CountdownTimer } from './CountdownTimer';
 import { StatusBadge } from './StatusBadge';
 import { TagChip } from './TagChip';
+import { useTheme } from '../context/ThemeContext';
 import { Colors, Spacing, BorderRadius, getCurrencySymbol } from '../lib/theme';
 import type { Order } from '../types';
 
@@ -21,6 +22,7 @@ interface Props {
 
 export function OrderCard({ order, compact = false }: Props) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const handlePress = () => {
     router.push(`/order/${order.id}`);
@@ -31,22 +33,22 @@ export function OrderCard({ order, compact = false }: Props) {
 
   return (
     <TouchableOpacity
-      style={[styles.card, compact && styles.cardCompact]}
+      style={[styles.card, compact && styles.cardCompact, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
       onPress={handlePress}
       activeOpacity={0.85}
     >
       {/* Top row */}
       <View style={styles.topRow}>
         <View style={styles.titleGroup}>
-          <Text style={styles.orderName} numberOfLines={1}>
+          <Text style={[styles.orderName, { color: colors.text }]} numberOfLines={1}>
             {order.orderName}
           </Text>
-          <Text style={styles.customerName} numberOfLines={1}>
+          <Text style={[styles.customerName, { color: colors.subText }]} numberOfLines={1}>
             {order.customerName}
           </Text>
         </View>
         <View style={styles.priceGroup}>
-          <Text style={styles.price}>
+          <Text style={[styles.price, { color: colors.text }]}>
             {symbol}{order.askingPrice.toFixed(0)}
           </Text>
           {order.isPaid ? (
@@ -78,7 +80,7 @@ export function OrderCard({ order, compact = false }: Props) {
       <View style={styles.bottomRow}>
         <StatusBadge status={order.status} size="sm" />
         <View style={styles.dateGroup}>
-          <Text style={styles.dueLabel}>
+          <Text style={[styles.dueLabel, { color: colors.subText }]}>
             Due {format(new Date(order.dueDate), 'MMM d')}
           </Text>
           {isActive && (
@@ -92,12 +94,10 @@ export function OrderCard({ order, compact = false }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.warmWhite,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
     shadowColor: Colors.bark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

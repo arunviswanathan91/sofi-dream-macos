@@ -20,7 +20,7 @@ export function InvoicePreview({ order, businessName, businessTagline, businessA
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const html = generateInvoiceHTML(order, businessName, businessTagline, undefined, businessAddress, gstNumber);
+      const html = generateInvoiceHTML(order, businessName, businessTagline, order.invoiceNumber, businessAddress, gstNumber);
       const { uri } = await Print.printToFileAsync({ html, base64: false });
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
