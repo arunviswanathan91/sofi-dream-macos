@@ -160,6 +160,7 @@ export default function SettingsScreen() {
             <SRow label="Notification Preferences" colors={colors} right={<Text style={[s.arrow, { color: colors.subText }]}>›</Text>} onPress={() => router.push('/notifications')} />
             <SRow label="Craft Categories" colors={colors} right={<Text style={[s.arrow, { color: colors.subText }]}>›</Text>} onPress={() => router.push('/(tabs)/track')} />
             <SRow label="Reports & Export" colors={colors} right={<Text style={[s.arrow, { color: colors.subText }]}>›</Text>} onPress={() => router.push('/reports')} />
+            <SRow label="Data Backup" colors={colors} right={<Text style={[s.arrow, { color: colors.subText }]}>›</Text>} onPress={() => router.push('/backup')} />
           </Sec>
 
           {/* About */}
