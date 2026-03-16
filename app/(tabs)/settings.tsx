@@ -14,6 +14,7 @@ import { Colors, Spacing, BorderRadius } from '../../lib/theme';
 import type { AppTheme } from '../../types';
 
 const THEMES: { label: string; value: AppTheme; bg: string; text: string; desc: string }[] = [
+  { label: 'System Default', value: 'system', bg: '#888888', text: '#FFFFFF', desc: 'Follows device dark/light mode' },
   { label: 'Warm Cream', value: 'warm-cream', bg: '#FAF7F2', text: '#3D2B1F', desc: 'Default warm tone' },
   { label: 'Dark Walnut', value: 'dark-walnut', bg: '#2A1F17', text: '#F5EDE3', desc: 'Dark, rich brown' },
   { label: 'Soft Sage', value: 'soft-sage', bg: '#EAF0EA', text: '#2D402D', desc: 'Calm green' },

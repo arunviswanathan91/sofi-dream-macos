@@ -123,6 +123,7 @@ export default function EditOrderScreen() {
   }
 
   const handleAddTag = (tag: string) => {
+
     const t = tag.trim().toLowerCase();
     if (t && !form.tags.includes(t)) set('tags', [...form.tags, t]);
   };
@@ -177,13 +178,6 @@ export default function EditOrderScreen() {
       setSaving(false);
     }
   };
-
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.subText }]}>{label}</Text>
-      {children}
-    </View>
-  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -415,6 +409,17 @@ export default function EditOrderScreen() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+  );
+}
+
+// Module-level component — stable reference prevents TextInput focus loss on re-render
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.field}>
+      <Text style={[styles.fieldLabel, { color: colors.subText }]}>{label}</Text>
+      {children}
+    </View>
   );
 }
 

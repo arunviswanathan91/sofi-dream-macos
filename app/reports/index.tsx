@@ -172,13 +172,13 @@ export default function ReportsScreen() {
         {/* Revenue Chart */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.subText }]}>Revenue Over Time</Text>
-          <RevenueLineChart data={report.revenueByDay} />
+          <RevenueLineChart data={report.revenueByDay} colors={colors} />
         </View>
 
         {/* Category Chart */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.subText }]}>Revenue by Category</Text>
-          <RevenueByCategoryChart data={report.revenueByCategory} />
+          <RevenueByCategoryChart data={report.revenueByCategory} colors={colors} currencySymbol={symbol} />
         </View>
 
         {/* Export Buttons */}
