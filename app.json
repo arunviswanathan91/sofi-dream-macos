@@ -19,6 +19,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.sofiedream.app"
     },
+    "macos": {
+      "bundleIdentifier": "com.sofiedream.macos"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
