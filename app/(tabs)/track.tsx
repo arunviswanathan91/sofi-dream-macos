@@ -15,8 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOrders } from '../../hooks/useOrders';
 import { useCategories } from '../../hooks/useCategories';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfile } from '../../hooks/useProfile';
 import { RevenueByCategoryChart } from '../../components/EarningsChart';
-import { Colors, Spacing, BorderRadius } from '../../lib/theme';
+import { Colors, Spacing, BorderRadius, getCurrencySymbol } from '../../lib/theme';
 import type { CraftCategory } from '../../types';
 
 const EMOJI_OPTIONS = ['✦', '◆', '◇', '⌂', '✧', '★', '♦', '❋', '✿', '❀', '✂', '⊕'];
@@ -26,6 +27,8 @@ export default function TrackScreen() {
   const { orders } = useOrders();
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
   const { colors } = useTheme();
+  const { profile } = useProfile();
+  const symbol = getCurrencySymbol(profile.currency);
   const { width } = useWindowDimensions();
   const isTablet = width >= 600;
 
@@ -123,7 +126,7 @@ export default function TrackScreen() {
               ))}
             </View>
           </View>
-          <RevenueByCategoryChart data={revenueByCategory} />
+          <RevenueByCategoryChart data={revenueByCategory} colors={colors} currencySymbol={symbol} />
         </View>
 
         {/* Category Grid */}
@@ -159,7 +162,7 @@ export default function TrackScreen() {
                 )}
                 {(revenueView === 'month' ? cat.monthRevenue : cat.totalRevenue) > 0 && (
                   <Text style={[styles.categoryRevenue, { color: cat.color }]}>
-                    €{(revenueView === 'month' ? cat.monthRevenue : cat.totalRevenue).toFixed(0)}
+                    {symbol}{(revenueView === 'month' ? cat.monthRevenue : cat.totalRevenue).toFixed(0)}
                   </Text>
                 )}
               </TouchableOpacity>

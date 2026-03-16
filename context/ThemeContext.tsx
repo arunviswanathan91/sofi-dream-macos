@@ -1,8 +1,10 @@
 /**
  * ThemeContext — provides dynamic colors based on the selected app theme.
- * Wrap the app at root level. Screens read from useThemeColors().
+ * Supports 'system' theme that follows Android/iOS dark mode automatically.
+ * Wrap the app at root level. Screens read from useTheme().
  */
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
 import { getLocalProfile } from '../lib/localStore';
 import type { AppTheme } from '../types';
 
@@ -17,7 +19,7 @@ export interface ThemeColors {
   isDark: boolean;
 }
 
-const THEME_PALETTE: Record<AppTheme, ThemeColors> = {
+const THEME_PALETTE: Record<Exclude<AppTheme, 'system'>, ThemeColors> = {
   'warm-cream': {
     bg: '#FAF7F2',
     card: '#FFF9F5',
@@ -60,6 +62,13 @@ const THEME_PALETTE: Record<AppTheme, ThemeColors> = {
   },
 };
 
+function resolveTheme(theme: AppTheme, systemIsDark: boolean): Exclude<AppTheme, 'system'> {
+  if (theme === 'system') {
+    return systemIsDark ? 'dark-walnut' : 'warm-cream';
+  }
+  return theme;
+}
+
 interface ThemeContextValue {
   theme: AppTheme;
   colors: ThemeColors;
@@ -73,6 +82,8 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const systemColorScheme = useColorScheme();
+  const systemIsDark = systemColorScheme === 'dark';
   const [theme, setThemeState] = useState<AppTheme>('warm-cream');
 
   // Load persisted theme from local store on mount
@@ -84,8 +95,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (t: AppTheme) => setThemeState(t);
 
+  const resolvedTheme = resolveTheme(theme, systemIsDark);
+  const colors = THEME_PALETTE[resolvedTheme];
+
   return (
-    <ThemeContext.Provider value={{ theme, colors: THEME_PALETTE[theme], setTheme }}>
+    <ThemeContext.Provider value={{ theme, colors, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

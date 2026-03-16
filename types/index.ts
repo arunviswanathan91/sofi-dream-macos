@@ -99,7 +99,7 @@ export interface BusinessProfile {
   theme: AppTheme;
 }
 
-export type AppTheme = 'warm-cream' | 'dark-walnut' | 'soft-sage' | 'lavender';
+export type AppTheme = 'warm-cream' | 'dark-walnut' | 'soft-sage' | 'lavender' | 'system';
 
 export interface WeeklyReport {
   period: { start: Date; end: Date };
