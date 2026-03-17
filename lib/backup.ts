@@ -32,8 +32,6 @@ import {
 } from './localStore';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
-export const GOOGLE_CLIENT_ID_ANDROID =
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? '';
 export const GOOGLE_CLIENT_ID_WEB =
   process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB ?? '';
 export const MICROSOFT_CLIENT_ID =
