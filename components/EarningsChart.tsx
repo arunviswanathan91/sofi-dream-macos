@@ -1,21 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { Colors, Spacing } from '../lib/theme';
-
-const screenWidth = Dimensions.get('window').width;
+import type { ThemeColors } from '../context/ThemeContext';
 
 interface LineProps {
   data: { date: string; amount: number }[];
   title?: string;
+  colors: ThemeColors;
 }
 
 interface BarProps {
   data: Record<string, number>;
   title?: string;
+  colors: ThemeColors;
+  currencySymbol?: string;
 }
 
-export function RevenueLineChart({ data, title }: LineProps) {
+export function RevenueLineChart({ data, title, colors }: LineProps) {
+  const { width } = useWindowDimensions();
+  const chartWidth = width - 48;
+
   const labels = data.map((d) => {
     const parts = d.date.split('-');
     return `${parts[1]}/${parts[2]}`;
@@ -26,21 +31,38 @@ export function RevenueLineChart({ data, title }: LineProps) {
 
   if (!hasData) {
     return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>No revenue data yet</Text>
+      <View style={[styles.emptyChart, { backgroundColor: colors.cardBorder }]}>
+        <Text style={[styles.emptyText, { color: colors.subText }]}>No revenue data yet</Text>
       </View>
     );
   }
 
+  const chartConfig = {
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.card,
+    color: (opacity = 1) => `rgba(201, 123, 90, ${opacity})`,
+    labelColor: () => colors.subText,
+    strokeWidth: 2,
+    propsForDots: {
+      r: '4',
+      strokeWidth: '2',
+      stroke: Colors.rose,
+    },
+    propsForBackgroundLines: {
+      stroke: colors.cardBorder,
+      strokeDasharray: '4',
+    },
+  };
+
   return (
     <View>
-      {title && <Text style={styles.chartTitle}>{title}</Text>}
+      {title && <Text style={[styles.chartTitle, { color: colors.subText }]}>{title}</Text>}
       <LineChart
         data={{
           labels,
           datasets: [{ data: values }],
         }}
-        width={screenWidth - 48}
+        width={chartWidth}
         height={160}
         chartConfig={chartConfig}
         bezier
@@ -52,13 +74,16 @@ export function RevenueLineChart({ data, title }: LineProps) {
   );
 }
 
-export function RevenueByCategoryChart({ data, title }: BarProps) {
+export function RevenueByCategoryChart({ data, title, colors, currencySymbol = '€' }: BarProps) {
+  const { width } = useWindowDimensions();
+  const chartWidth = width - 48;
+
   const entries = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, 5);
 
   if (entries.length === 0) {
     return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>No category data yet</Text>
+      <View style={[styles.emptyChart, { backgroundColor: colors.cardBorder }]}>
+        <Text style={[styles.emptyText, { color: colors.subText }]}>No category data yet</Text>
       </View>
     );
   }
@@ -66,48 +91,43 @@ export function RevenueByCategoryChart({ data, title }: BarProps) {
   const labels = entries.map(([k]) => k.slice(0, 8));
   const values = entries.map(([, v]) => v);
 
+  const barChartConfig = {
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.card,
+    color: (opacity = 1) => `rgba(212, 168, 83, ${opacity})`,
+    labelColor: () => colors.subText,
+    strokeWidth: 2,
+    propsForDots: {
+      r: '4',
+      strokeWidth: '2',
+      stroke: Colors.rose,
+    },
+    propsForBackgroundLines: {
+      stroke: colors.cardBorder,
+      strokeDasharray: '4',
+    },
+  };
+
   return (
     <View>
-      {title && <Text style={styles.chartTitle}>{title}</Text>}
+      {title && <Text style={[styles.chartTitle, { color: colors.subText }]}>{title}</Text>}
       <BarChart
         data={{
           labels,
           datasets: [{ data: values }],
         }}
-        width={screenWidth - 48}
+        width={chartWidth}
         height={160}
         chartConfig={barChartConfig}
         style={styles.chart}
         showValuesOnTopOfBars
-        yAxisLabel="€"
+        yAxisLabel={currencySymbol}
         yAxisSuffix=""
         fromZero
       />
     </View>
   );
 }
-
-const chartConfig = {
-  backgroundGradientFrom: Colors.warmWhite,
-  backgroundGradientTo: Colors.warmWhite,
-  color: (opacity = 1) => `rgba(201, 123, 90, ${opacity})`,
-  labelColor: () => Colors.muted,
-  strokeWidth: 2,
-  propsForDots: {
-    r: '4',
-    strokeWidth: '2',
-    stroke: Colors.rose,
-  },
-  propsForBackgroundLines: {
-    stroke: Colors.border,
-    strokeDasharray: '4',
-  },
-};
-
-const barChartConfig = {
-  ...chartConfig,
-  color: (opacity = 1) => `rgba(212, 168, 83, ${opacity})`,
-};
 
 const styles = StyleSheet.create({
   chart: {
@@ -117,7 +137,6 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 13,
     fontFamily: 'DMSans',
-    color: Colors.muted,
     marginBottom: 4,
     letterSpacing: 0.3,
   },
@@ -125,12 +144,10 @@ const styles = StyleSheet.create({
     height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.border,
     borderRadius: 12,
     marginVertical: Spacing.sm,
   },
   emptyText: {
-    color: Colors.muted,
     fontFamily: 'DMSans',
     fontSize: 13,
   },

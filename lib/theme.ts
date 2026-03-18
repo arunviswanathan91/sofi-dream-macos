@@ -53,3 +53,20 @@ export const BorderRadius = {
 } as const;
 
 export type ThemeColors = typeof Colors;
+
+/** Maps ISO currency code → symbol string */
+export function getCurrencySymbol(currency: string): string {
+  const map: Record<string, string> = {
+    EUR: '€',
+    GBP: '£',
+    USD: '$',
+    INR: '₹',
+    CHF: 'Fr',
+    SEK: 'kr',
+    PLN: 'zł',
+    JPY: '¥',
+    AUD: 'A$',
+    CAD: 'C$',
+  };
+  return map[currency] ?? currency;
+}

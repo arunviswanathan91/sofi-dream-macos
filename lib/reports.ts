@@ -1,3 +1,4 @@
+import { getCurrencySymbol } from './theme';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import type { Order, WeeklyReport } from '../types';
 
@@ -83,9 +84,11 @@ export function generateInvoiceHTML(
   order: Order,
   businessName: string,
   businessTagline?: string,
-  invoiceNumber?: string
+  invoiceNumber?: string,
+  businessAddress?: string,
+  gstNumber?: string
 ): string {
-  const currencySymbol = order.currency === 'EUR' ? '€' : order.currency === 'GBP' ? '£' : '$';
+  const currencySymbol = getCurrencySymbol(order.currency);
   const invoiceNum = invoiceNumber ?? `INV-${format(new Date(), 'yyyy')}-${order.id.slice(0, 6).toUpperCase()}`;
   const today = format(new Date(), 'MMM d, yyyy');
 
@@ -113,6 +116,8 @@ export function generateInvoiceHTML(
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
     .status-paid { background: #8BAF8D22; color: #8BAF8D; }
     .status-unpaid { background: #E07B6A22; color: #E07B6A; }
+    .business-address { font-size: 11px; color: #8A7B72; margin-top: 2px; }
+    .business-gst { font-size: 11px; color: #8A7B72; margin-top: 2px; font-family: monospace; }
     .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #8A7B72; }
   </style>
 </head>
@@ -121,6 +126,8 @@ export function generateInvoiceHTML(
     <div>
       <div class="business-name">${businessName.toUpperCase()}</div>
       <div class="business-tagline">${businessTagline ?? ''}</div>
+      ${businessAddress ? `<div class="business-address">${businessAddress}</div>` : ''}
+      ${gstNumber ? `<div class="business-gst">GST: ${gstNumber}</div>` : ''}
     </div>
     <div>
       <div class="invoice-label">INVOICE</div>
@@ -177,10 +184,11 @@ export function generateInvoiceHTML(
 export function generateMonthlyReportHTML(
   report: WeeklyReport,
   orders: Order[],
-  businessName: string
+  businessName: string,
+  defaultCurrency?: string
 ): string {
   const periodLabel = `${format(report.period.start, 'MMMM yyyy')} Report`;
-  const currencySymbol = '€';
+  const currencySymbol = getCurrencySymbol(orders[0]?.currency ?? defaultCurrency ?? 'EUR');
 
   const orderRows = orders
     .filter((o) => {
@@ -219,6 +227,8 @@ export function generateMonthlyReportHTML(
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { text-align: left; padding: 8px 10px; background: #3D2B1F; color: white; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
     td { padding: 10px; border-bottom: 1px solid #F0E8DF; }
+    .business-address { font-size: 11px; color: #8A7B72; margin-top: 2px; }
+    .business-gst { font-size: 11px; color: #8A7B72; margin-top: 2px; font-family: monospace; }
     .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #8A7B72; }
   </style>
 </head>

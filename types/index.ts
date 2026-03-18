@@ -32,6 +32,7 @@ export interface Order {
   status: OrderStatus;
   shipmentId?: string;
   carrier?: string;
+  invoiceNumber?: string;
 
   // Categorization
   tags: string[];
@@ -91,12 +92,14 @@ export interface BusinessProfile {
   name: string;
   tagline?: string;
   logoUrl?: string;
+  address?: string;
+  gstNumber?: string;
   currency: string;
   timezone: string;
   theme: AppTheme;
 }
 
-export type AppTheme = 'warm-cream' | 'dark-walnut' | 'soft-sage' | 'lavender';
+export type AppTheme = 'warm-cream' | 'dark-walnut' | 'soft-sage' | 'lavender' | 'system';
 
 export interface WeeklyReport {
   period: { start: Date; end: Date };

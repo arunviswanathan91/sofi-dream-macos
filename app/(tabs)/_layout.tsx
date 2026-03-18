@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, BorderRadius } from '../../lib/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 interface TabIconProps {
   emoji: string;
@@ -19,13 +20,15 @@ function TabIcon({ emoji, label, focused }: TabIconProps) {
 }
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.warmWhite,
-          borderTopColor: Colors.border,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.cardBorder,
           borderTopWidth: 1,
           height: 72,
           paddingBottom: 8,
