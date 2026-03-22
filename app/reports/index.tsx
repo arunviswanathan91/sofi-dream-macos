@@ -97,11 +97,11 @@ export default function ReportsScreen() {
   const statsPerRow = isTablet ? (width >= 840 ? 4 : 3) : 3;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+    <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={[styles.screenTitle, { color: colors.text }]}>Reports</Text>
+        <Text style={styles.screenTitle}>Reports</Text>
 
-        {/* Period Selector */}
+        {/* Period Selector — pill chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -113,28 +113,27 @@ export default function ReportsScreen() {
               key={p.value}
               style={[
                 styles.periodChip,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
                 period === p.value && styles.periodChipActive,
               ]}
               onPress={() => setPeriod(p.value)}
             >
-              <Text style={[styles.periodText, { color: colors.subText }, period === p.value && styles.periodTextActive]}>
+              <Text style={[styles.periodText, period === p.value && styles.periodTextActive]}>
                 {p.label}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Summary Stats — adaptive grid */}
+        {/* Summary Stats — surfaceLow tiles, adaptive grid */}
         <View style={[styles.statsGrid, isTablet && { paddingHorizontal: Spacing.md }]}>
           {[
-            { label: 'Revenue', value: report.totalRevenue, prefix: symbol, accentColor: Colors.rose },
-            { label: 'Completed', value: report.ordersCompleted, accentColor: Colors.sage },
-            { label: 'Avg Value', value: report.averageOrderValue, prefix: symbol, accentColor: Colors.gold },
-            { label: 'Accepted', value: report.ordersAccepted, accentColor: Colors.sky },
-            { label: 'Shipped', value: report.ordersShipped, accentColor: Colors.lilac },
-            { label: 'Unpaid', value: report.unpaidTotal, prefix: symbol, accentColor: Colors.coral },
-          ].map((stat, i) => (
+            { label: 'Revenue', value: report.totalRevenue, prefix: symbol, accentColor: Colors.primary },
+            { label: 'Completed', value: report.ordersCompleted, accentColor: Colors.tertiary },
+            { label: 'Avg Value', value: report.averageOrderValue, prefix: symbol, accentColor: Colors.primaryContainer },
+            { label: 'Accepted', value: report.ordersAccepted, accentColor: Colors.secondary },
+            { label: 'Shipped', value: report.ordersShipped, accentColor: Colors.outline },
+            { label: 'Unpaid', value: report.unpaidTotal, prefix: symbol, accentColor: Colors.subText },
+          ].map((stat) => (
             <View key={stat.label} style={[styles.statTileWrapper, { width: `${100 / statsPerRow}%` }]}>
               <StatTile
                 label={stat.label}
@@ -146,21 +145,21 @@ export default function ReportsScreen() {
           ))}
         </View>
 
-        {/* Top Stats */}
+        {/* Highlights — tonal surfaceLow bg, no border */}
         {(report.topCategory || report.topCustomer.name) && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.subText }]}>Highlights</Text>
-            <View style={[styles.highlightsCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={styles.sectionTitle}>Highlights</Text>
+            <View style={styles.highlightsCard}>
               {report.topCategory ? (
                 <View style={styles.highlightRow}>
-                  <Text style={[styles.highlightLabel, { color: colors.subText }]}>Top Category</Text>
-                  <Text style={[styles.highlightValue, { color: colors.text }]}>{report.topCategory}</Text>
+                  <Text style={styles.highlightLabel}>Top Category</Text>
+                  <Text style={styles.highlightValue}>{report.topCategory}</Text>
                 </View>
               ) : null}
               {report.topCustomer.name ? (
-                <View style={styles.highlightRow}>
-                  <Text style={[styles.highlightLabel, { color: colors.subText }]}>Top Customer</Text>
-                  <Text style={[styles.highlightValue, { color: colors.text }]}>
+                <View style={[styles.highlightRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.highlightLabel}>Top Customer</Text>
+                  <Text style={styles.highlightValue}>
                     {report.topCustomer.name} · {symbol}{report.topCustomer.spent.toFixed(2)}
                   </Text>
                 </View>
@@ -171,37 +170,37 @@ export default function ReportsScreen() {
 
         {/* Revenue Chart */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.subText }]}>Revenue Over Time</Text>
+          <Text style={styles.sectionTitle}>Revenue Over Time</Text>
           <RevenueLineChart data={report.revenueByDay} colors={colors} />
         </View>
 
         {/* Category Chart */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.subText }]}>Revenue by Category</Text>
+          <Text style={styles.sectionTitle}>Revenue by Category</Text>
           <RevenueByCategoryChart data={report.revenueByCategory} colors={colors} currencySymbol={symbol} />
         </View>
 
-        {/* Export Buttons */}
+        {/* Export Buttons — pill shape, primaryContainer bg */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.subText }]}>Export</Text>
+          <Text style={styles.sectionTitle}>Export</Text>
           <View style={[styles.exportButtons, isTablet && styles.exportButtonsRow]}>
             <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: Colors.rose }, isTablet && { flex: 1 }]}
+              style={[styles.exportButton, isTablet && { flex: 1 }]}
               onPress={handleExportPDF}
               disabled={exporting}
             >
               {exporting ? (
-                <ActivityIndicator color={Colors.white} size="small" />
+                <ActivityIndicator color={Colors.onPrimary} size="small" />
               ) : (
                 <Text style={styles.exportButtonText}>Export PDF Report</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: Colors.sage }, isTablet && { flex: 1 }]}
+              style={[styles.exportButtonSecondary, isTablet && { flex: 1 }]}
               onPress={handleExportCSV}
               disabled={exporting}
             >
-              <Text style={styles.exportButtonText}>Export CSV</Text>
+              <Text style={styles.exportButtonSecondaryText}>Export CSV</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -213,11 +212,13 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: 24 },
   screenTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontFamily: 'PlayfairDisplay',
+    fontWeight: '700',
+    color: Colors.text,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
@@ -232,19 +233,19 @@ const styles = StyleSheet.create({
   periodChip: {
     paddingHorizontal: 18,
     paddingVertical: 7,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.surfaceContainer,
   },
   periodChipActive: {
-    backgroundColor: Colors.rose,
-    borderColor: Colors.rose,
+    backgroundColor: Colors.primaryContainer,
   },
   periodText: {
     fontSize: 13,
     fontFamily: 'DMSans',
+    color: Colors.subText,
   },
   periodTextActive: {
-    color: Colors.white,
+    color: Colors.onPrimary,
     fontWeight: '600',
   },
   statsGrid: {
@@ -261,29 +262,29 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontFamily: 'DMSans',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    fontWeight: '600',
+    fontSize: 20,
+    fontFamily: 'PlayfairDisplay',
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: Spacing.sm,
   },
   highlightsCard: {
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.card,
     padding: Spacing.md,
-    borderWidth: 1,
-    gap: Spacing.sm,
+    backgroundColor: Colors.surfaceLow,
+    gap: Spacing.xs,
   },
   highlightRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.outlineVariant,
   },
   highlightLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'DMSans',
+    color: Colors.subText,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -291,6 +292,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'DMSans',
     fontWeight: '600',
+    color: Colors.text,
   },
   exportButtons: {
     gap: Spacing.sm,
@@ -299,12 +301,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   exportButton: {
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.lg,
     alignItems: 'center',
+    backgroundColor: Colors.primaryContainer,
   },
   exportButtonText: {
-    color: Colors.white,
+    color: Colors.onPrimary,
+    fontFamily: 'DMSans',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  exportButtonSecondary: {
+    borderRadius: BorderRadius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.lg,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainer,
+  },
+  exportButtonSecondaryText: {
+    color: Colors.primary,
     fontFamily: 'DMSans',
     fontSize: 14,
     fontWeight: '600',
