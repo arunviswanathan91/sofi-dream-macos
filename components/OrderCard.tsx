@@ -12,13 +12,22 @@ import { CountdownTimer } from './CountdownTimer';
 import { StatusBadge } from './StatusBadge';
 import { TagChip } from './TagChip';
 import { useTheme } from '../context/ThemeContext';
-import { Colors, Spacing, BorderRadius, getCurrencySymbol } from '../lib/theme';
+import { Colors, StatusTokens, Spacing, BorderRadius, getCurrencySymbol } from '../lib/theme';
 import type { Order } from '../types';
 
 interface Props {
   order: Order;
   compact?: boolean;
 }
+
+// 4px left status ribbon color per status
+const RIBBON_COLOR: Record<Order['status'], string> = {
+  request:   Colors.secondary,
+  accepted:  Colors.primaryContainer,
+  shipped:   Colors.primary,
+  delivered: Colors.tertiary,
+  cancelled: Colors.outline,
+};
 
 export function OrderCard({ order, compact = false }: Props) {
   const router = useRouter();
@@ -30,25 +39,29 @@ export function OrderCard({ order, compact = false }: Props) {
 
   const symbol = getCurrencySymbol(order.currency);
   const isActive = ['accepted', 'request'].includes(order.status);
+  const ribbonColor = RIBBON_COLOR[order.status];
 
   return (
     <TouchableOpacity
-      style={[styles.card, compact && styles.cardCompact, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      style={[styles.card, compact && styles.cardCompact]}
       onPress={handlePress}
       activeOpacity={0.85}
     >
+      {/* 4px absolute-left status ribbon */}
+      <View style={[styles.ribbon, { backgroundColor: ribbonColor }]} />
+
       {/* Top row */}
       <View style={styles.topRow}>
         <View style={styles.titleGroup}>
-          <Text style={[styles.orderName, { color: colors.text }]} numberOfLines={1}>
+          <Text style={styles.orderName} numberOfLines={1}>
             {order.orderName}
           </Text>
-          <Text style={[styles.customerName, { color: colors.subText }]} numberOfLines={1}>
+          <Text style={styles.customerName} numberOfLines={1}>
             {order.customerName}
           </Text>
         </View>
         <View style={styles.priceGroup}>
-          <Text style={[styles.price, { color: colors.text }]}>
+          <Text style={styles.price}>
             {symbol}{order.askingPrice.toFixed(0)}
           </Text>
           {order.isPaid ? (
@@ -68,7 +81,7 @@ export function OrderCard({ order, compact = false }: Props) {
           keyboardShouldPersistTaps="always"
         >
           {order.craftCategory ? (
-            <TagChip label={order.craftCategory} color={Colors.lilac} />
+            <TagChip label={order.craftCategory} color={Colors.primaryContainer} />
           ) : null}
           {order.tags.slice(0, 3).map((tag) => (
             <TagChip key={tag} label={tag} />
@@ -80,7 +93,7 @@ export function OrderCard({ order, compact = false }: Props) {
       <View style={styles.bottomRow}>
         <StatusBadge status={order.status} size="sm" />
         <View style={styles.dateGroup}>
-          <Text style={[styles.dueLabel, { color: colors.subText }]}>
+          <Text style={styles.dueLabel}>
             Due {format(new Date(order.dueDate), 'MMM d')}
           </Text>
           {isActive && (
@@ -94,19 +107,29 @@ export function OrderCard({ order, compact = false }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.card,
     padding: Spacing.md,
+    paddingLeft: Spacing.md + 4 + 8, // leave room for ribbon
     marginBottom: Spacing.sm,
-    borderWidth: 1,
-    shadowColor: Colors.bark,
+    backgroundColor: Colors.surfaceLowest,
+    overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.03)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 2,
   },
   cardCompact: {
     padding: Spacing.sm,
+    paddingLeft: Spacing.sm + 4 + 8,
     marginBottom: Spacing.xs,
+  },
+  ribbon: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
   },
   topRow: {
     flexDirection: 'row',
@@ -119,29 +142,30 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   orderName: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'PlayfairDisplay',
-    color: Colors.bark,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 2,
   },
   customerName: {
     fontSize: 12,
     fontFamily: 'DMSans',
-    color: Colors.muted,
+    color: Colors.subText,
   },
   priceGroup: {
     alignItems: 'flex-end',
   },
   price: {
-    fontSize: 16,
-    fontFamily: 'DMMono',
-    color: Colors.bark,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: 'DMSans',
+    color: Colors.primary,
+    fontWeight: '700',
   },
   paidLabel: {
     fontSize: 9,
     fontFamily: 'DMSans',
-    color: Colors.sage,
+    color: Colors.tertiary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: 1,
@@ -149,7 +173,7 @@ const styles = StyleSheet.create({
   unpaidLabel: {
     fontSize: 9,
     fontFamily: 'DMSans',
-    color: Colors.coral,
+    color: Colors.outline,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: 1,
@@ -169,7 +193,7 @@ const styles = StyleSheet.create({
   dueLabel: {
     fontSize: 11,
     fontFamily: 'DMSans',
-    color: Colors.muted,
+    color: Colors.subText,
   },
   countdown: {
     fontSize: 11,

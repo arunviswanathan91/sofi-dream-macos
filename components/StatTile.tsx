@@ -27,16 +27,18 @@ export function StatTile({ label, value, prefix = '', suffix = '', onPress, acce
     });
   }, [value]);
 
-  const color = accentColor ?? Colors.rose;
+  const color = accentColor ?? Colors.primary;
 
   return (
     <TouchableOpacity
-      style={[styles.tile, { borderTopColor: color }]}
+      style={styles.tile}
       onPress={onPress}
       disabled={!onPress}
       activeOpacity={onPress ? 0.8 : 1}
     >
-      <Text style={[styles.value, { color }]}>
+      {/* Accent indicator dot */}
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text style={styles.value}>
         {prefix}{value.toFixed(value % 1 === 0 ? 0 : 2)}{suffix}
       </Text>
       <Text style={styles.label}>{label}</Text>
@@ -47,28 +49,35 @@ export function StatTile({ label, value, prefix = '', suffix = '', onPress, acce
 const styles = StyleSheet.create({
   tile: {
     flex: 1,
-    backgroundColor: Colors.warmWhite,
-    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceLow,
+    borderRadius: BorderRadius.card,
     padding: Spacing.md,
     alignItems: 'flex-start',
-    borderTopWidth: 3,
     marginHorizontal: 3,
-    shadowColor: Colors.bark,
+    shadowColor: 'rgba(0,0,0,0.03)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 6,
     elevation: 2,
   },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
   value: {
-    fontSize: 22,
-    fontFamily: 'DMMono',
-    fontWeight: '600',
+    fontSize: 28,
+    fontFamily: 'PlayfairDisplay',
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 4,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'DMSans',
-    color: Colors.muted,
-    letterSpacing: 0.3,
+    color: Colors.subText,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });
