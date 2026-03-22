@@ -116,14 +116,13 @@ export default function EditOrderScreen() {
 
   if (!order) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.notFound, { color: colors.subText }]}>Order not found</Text>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.notFound}>Order not found</Text>
       </SafeAreaView>
     );
   }
 
   const handleAddTag = (tag: string) => {
-
     const t = tag.trim().toLowerCase();
     if (t && !form.tags.includes(t)) set('tags', [...form.tags, t]);
   };
@@ -180,18 +179,19 @@ export default function EditOrderScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-      <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.subText }]}>← Cancel</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.cancelPill}>
+          <Text style={styles.cancelText}>← Cancel</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Order</Text>
+        <Text style={styles.headerTitle}>Edit Order</Text>
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.saveButton, saving && { opacity: 0.6 }]}
+          style={[styles.saveHeaderPill, saving && { opacity: 0.6 }]}
           disabled={saving}
         >
-          <Text style={styles.saveText}>{saving ? '...' : 'Save'}</Text>
+          <Text style={styles.saveHeaderText}>{saving ? '...' : 'Save'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -205,25 +205,26 @@ export default function EditOrderScreen() {
           keyboardShouldPersistTaps="always"
           contentContainerStyle={{ paddingBottom: 120 }}
         >
-          <View style={[styles.formSection, { borderBottomColor: colors.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Details</Text>
+          {/* Order Details section */}
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Order Details</Text>
             <Field label="Order Name *">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.orderName}
                 onChangeText={(v) => set('orderName', v)}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
                 placeholder="e.g. Floral hoop for Anna"
               />
             </Field>
             <Field label="Description">
               <TextInput
-                style={[styles.input, styles.multiline, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={[styles.input, styles.multiline]}
                 value={form.description}
                 onChangeText={(v) => set('description', v)}
                 multiline
                 numberOfLines={3}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
             <Field label="Craft Category">
@@ -251,11 +252,11 @@ export default function EditOrderScreen() {
               </View>
               <View style={styles.customTagRow}>
                 <TextInput
-                  style={[styles.input, { flex: 1, marginBottom: 0, backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
                   value={form.customTag}
                   onChangeText={(v) => set('customTag', v)}
                   placeholder="Custom tag..."
-                  placeholderTextColor={colors.subText}
+                  placeholderTextColor={Colors.outline}
                   onSubmitEditing={() => {
                     handleAddTag(form.customTag);
                     set('customTag', '');
@@ -276,64 +277,66 @@ export default function EditOrderScreen() {
               </ScrollView>
             </Field>
             <Field label={`Photos (${form.photos.length}/5)`}>
-              <TouchableOpacity style={[styles.photoButton, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={handlePickPhoto}>
+              <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
                 <Text style={styles.photoButtonText}>📎 {form.photos.length} photo(s) — Tap to add</Text>
               </TouchableOpacity>
             </Field>
           </View>
 
-          <View style={[styles.formSection, { borderBottomColor: colors.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Customer Info</Text>
+          {/* Customer Info section */}
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Customer Info</Text>
             <Field label="Customer Name *">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.customerName}
                 onChangeText={(v) => set('customerName', v)}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
             <Field label="Address">
               <TextInput
-                style={[styles.input, styles.multiline, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={[styles.input, styles.multiline]}
                 value={form.customerAddress}
                 onChangeText={(v) => set('customerAddress', v)}
                 multiline
                 numberOfLines={2}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
             <Field label="Phone">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.customerPhone}
                 onChangeText={(v) => set('customerPhone', v)}
                 keyboardType="phone-pad"
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
             <Field label="Instagram">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.customerInstagram}
                 onChangeText={(v) => set('customerInstagram', v)}
                 autoCapitalize="none"
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
           </View>
 
-          <View style={[styles.formSection, { borderBottomColor: colors.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Financials</Text>
+          {/* Financials section */}
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Financials</Text>
             <Field label="Currency">
               <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always">
                 <View style={styles.priceRow}>
                   {CURRENCIES.map((c) => (
                     <TouchableOpacity
                       key={c}
-                      style={[styles.currencyOption, { backgroundColor: colors.card, borderColor: colors.cardBorder }, form.currency === c && styles.currencyOptionActive]}
+                      style={[styles.currencyOption, form.currency === c && styles.currencyOptionActive]}
                       onPress={() => set('currency', c)}
                     >
-                      <Text style={[styles.currencyText, { color: colors.subText }, form.currency === c && styles.currencyTextActive]}>{c}</Text>
+                      <Text style={[styles.currencyText, form.currency === c && styles.currencyTextActive]}>{c}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -341,43 +344,44 @@ export default function EditOrderScreen() {
             </Field>
             <Field label="Asking Price">
               <TextInput
-                style={[styles.input, { fontFamily: 'DMMono', fontSize: 20, backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={[styles.input, { fontFamily: 'DMMono', fontSize: 20 }]}
                 value={form.askingPrice}
                 onChangeText={(v) => set('askingPrice', v)}
                 keyboardType="decimal-pad"
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
                 placeholder="0.00"
               />
             </Field>
             <Field label="Payment Status">
-              <View style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <Text style={[styles.toggleLabel, { color: colors.text }]}>Paid</Text>
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleLabel}>Paid</Text>
                 <Switch
                   value={form.isPaid}
                   onValueChange={(v) => set('isPaid', v)}
-                  trackColor={{ false: Colors.border, true: Colors.sage }}
-                  thumbColor={Colors.white}
+                  trackColor={{ false: Colors.outlineVariant, true: Colors.primaryContainer }}
+                  thumbColor={Colors.surfaceLowest}
                 />
               </View>
             </Field>
             <Field label="Payment Notes">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.paymentNotes}
                 onChangeText={(v) => set('paymentNotes', v)}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
           </View>
 
+          {/* Dates & Notes section */}
           <View style={[styles.formSection, { borderBottomWidth: 0 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Dates & Notes</Text>
+            <Text style={styles.sectionTitle}>Dates & Notes</Text>
             <Field label="Due Date (YYYY-MM-DD)">
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={styles.input}
                 value={form.dueDateText}
                 onChangeText={parseDueDate}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
                 placeholder="2025-12-31"
               />
               <Text style={styles.dueDatePreview}>
@@ -386,20 +390,20 @@ export default function EditOrderScreen() {
             </Field>
             <Field label="Internal Notes">
               <TextInput
-                style={[styles.input, styles.multiline, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
+                style={[styles.input, styles.multiline]}
                 value={form.internalNotes}
                 onChangeText={(v) => set('internalNotes', v)}
                 multiline
                 numberOfLines={3}
-                placeholderTextColor={colors.subText}
+                placeholderTextColor={Colors.outline}
               />
             </Field>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Sticky bottom save button — always visible above Android nav bar */}
-      <View style={[styles.stickyBar, { backgroundColor: colors.bg, borderTopColor: colors.cardBorder, paddingBottom: insets.bottom + 8 }]}>
+      {/* Sticky bottom save button */}
+      <View style={[styles.stickyBar, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[styles.stickySaveBtn, saving && { opacity: 0.5 }]}
@@ -414,106 +418,129 @@ export default function EditOrderScreen() {
 
 // Module-level component — stable reference prevents TextInput focus loss on re-render
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  const { colors } = useTheme();
   return (
     <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.subText }]}>{label}</Text>
+      <Text style={styles.fieldLabel}>{label}</Text>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  notFound: { fontFamily: 'DMSans', textAlign: 'center', marginTop: 40 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  notFound: { fontFamily: 'DMSans', textAlign: 'center', marginTop: 40, color: Colors.subText },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
   },
-  backButton: { padding: 4 },
-  backText: { fontSize: 14, fontFamily: 'DMSans' },
-  headerTitle: { fontSize: 18, fontFamily: 'PlayfairDisplay' },
-  saveButton: {
-    backgroundColor: Colors.rose,
-    borderRadius: BorderRadius.full,
+  cancelPill: {
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: BorderRadius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  cancelText: { fontSize: 13, fontFamily: 'DMSans', color: Colors.subText },
+  headerTitle: { fontSize: 18, fontFamily: 'PlayfairDisplay', color: Colors.text },
+  saveHeaderPill: {
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: BorderRadius.pill,
     paddingHorizontal: 18,
     paddingVertical: 7,
   },
-  saveText: { color: Colors.white, fontFamily: 'DMSans', fontSize: 13, fontWeight: '700' },
+  saveHeaderText: { color: Colors.onPrimary, fontFamily: 'DMSans', fontSize: 13, fontWeight: '700' },
+
   scroll: { flex: 1 },
   formSection: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.surfaceLow,
+    marginHorizontal: Spacing.md,
+    borderRadius: BorderRadius.card,
+    marginTop: Spacing.sm,
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: 'PlayfairDisplay',
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: Spacing.md,
   },
   field: { marginBottom: Spacing.md },
   fieldLabel: {
     fontSize: 11,
     fontFamily: 'DMSans',
+    color: Colors.subText,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 6,
   },
   input: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.pill,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     fontFamily: 'DMSans',
     fontSize: 15,
-    borderWidth: 1,
+    backgroundColor: Colors.surfaceLowest,
+    color: Colors.text,
   },
-  multiline: { minHeight: 72, textAlignVertical: 'top', paddingTop: 10 },
+  multiline: { borderRadius: BorderRadius.card, minHeight: 72, textAlignVertical: 'top', paddingTop: 10 },
   chipRow: { maxHeight: 44 },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: Spacing.sm },
   customTagRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
   addTagButton: {
-    backgroundColor: Colors.rose,
-    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: BorderRadius.pill,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  addTagText: { color: Colors.white, fontFamily: 'DMSans', fontSize: 13, fontWeight: '600' },
+  addTagText: { color: Colors.onPrimary, fontFamily: 'DMSans', fontSize: 13, fontWeight: '600' },
   photoButton: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.card,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
   },
-  photoButtonText: { fontFamily: 'DMSans', fontSize: 14, color: Colors.rose },
+  photoButtonText: { fontFamily: 'DMSans', fontSize: 14, color: Colors.primary },
   priceRow: { flexDirection: 'row', gap: 6, marginBottom: Spacing.sm },
   currencyOption: {
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.surfaceContainer,
   },
-  currencyOptionActive: { backgroundColor: Colors.rose, borderColor: Colors.rose },
-  currencyText: { fontSize: 12, fontFamily: 'DMMono' },
-  currencyTextActive: { color: Colors.white, fontWeight: '600' },
+  currencyOptionActive: { backgroundColor: Colors.primaryContainer },
+  currencyText: { fontSize: 12, fontFamily: 'DMMono', color: Colors.subText },
+  currencyTextActive: { color: Colors.onPrimary, fontWeight: '600' },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.pill,
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
-    borderWidth: 1,
+    backgroundColor: Colors.surfaceLowest,
   },
-  toggleLabel: { fontSize: 14, fontFamily: 'DMSans' },
-  dueDatePreview: { fontSize: 12, fontFamily: 'DMSans', color: Colors.rose, marginTop: 6 },
-  stickyBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: Spacing.md, paddingTop: 10 },
-  stickySaveBtn: { backgroundColor: Colors.rose, borderRadius: BorderRadius.md, paddingVertical: 15, alignItems: 'center' },
-  stickySaveTxt: { color: Colors.white, fontFamily: 'DMSans', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
+  toggleLabel: { fontSize: 14, fontFamily: 'DMSans', color: Colors.text },
+  dueDatePreview: { fontSize: 12, fontFamily: 'DMSans', color: Colors.primary, marginTop: 6 },
+  stickyBar: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.outlineVariant,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 10,
+    backgroundColor: Colors.background,
+  },
+  stickySaveBtn: {
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: BorderRadius.pill,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  stickySaveTxt: { color: Colors.onPrimary, fontFamily: 'DMSans', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });
