@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -29,6 +29,14 @@
       },
       "package": "com.sofiedream.app",
       "softwareKeyboardLayoutMode": "pan",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "sofi-dream", "host": "auth" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
@@ -70,9 +78,6 @@
         "projectId": "6f320e34-a08c-421a-8492-652c240da954",
         "owner": "arunviswanathan91"
       }
-    },
-    "cli": {
-      "appVersionSource": "remote"
     }
   }
 }

@@ -30,16 +30,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   title: {
-    fontSize: 14,
-    fontFamily: 'DMSans',
-    color: Colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    fontWeight: '600',
+    fontSize: 20,
+    fontFamily: 'PlayfairDisplay',
+    color: Colors.text,
+    fontWeight: '700',
   },
   action: {
     fontSize: 13,
     fontFamily: 'DMSans',
-    color: Colors.rose,
+    color: Colors.primary,
   },
 });

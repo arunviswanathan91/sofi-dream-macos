@@ -11,8 +11,13 @@ interface Props {
 }
 
 export function TagChip({ label, onRemove, onPress, selected, color }: Props) {
-  const bg = color ? `${color}22` : selected ? `${Colors.rose}22` : Colors.border;
-  const textColor = color ?? (selected ? Colors.rose : Colors.muted);
+  // When a custom color is provided: tinted bg; selected: primary tint; default: surfaceContainer
+  const bg = color
+    ? `${color}22`
+    : selected
+    ? `${Colors.primaryContainer}33`
+    : Colors.surfaceContainer;
+  const textColor = color ?? (selected ? Colors.primary : Colors.subText);
 
   return (
     <TouchableOpacity
@@ -37,7 +42,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.pill,
     marginRight: 6,
     marginBottom: 4,
   },

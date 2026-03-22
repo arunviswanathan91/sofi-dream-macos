@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { StatusColors, Colors, BorderRadius } from '../lib/theme';
+import { StatusTokens, BorderRadius } from '../lib/theme';
 import type { OrderStatus } from '../types';
 
 interface Props {
@@ -17,19 +17,18 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export function StatusBadge({ status, size = 'md' }: Props) {
-  const color = StatusColors[status];
+  const token = StatusTokens[status];
   const isSmall = size === 'sm';
 
   return (
     <View
       style={[
         styles.badge,
-        { backgroundColor: `${color}22`, borderColor: `${color}44` },
+        { backgroundColor: token.bg },
         isSmall && styles.badgeSm,
       ]}
     >
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={[styles.label, { color }, isSmall && styles.labelSm]}>
+      <Text style={[styles.label, { color: token.text }, isSmall && styles.labelSm]}>
         {STATUS_LABELS[status]}
       </Text>
     </View>
@@ -40,25 +39,19 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: 5,
+    borderRadius: BorderRadius.pill,
   },
   badgeSm: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 2,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   label: {
     fontSize: 11,
-    fontFamily: 'DMMono',
-    letterSpacing: 0.5,
+    fontFamily: 'DMSans',
+    fontWeight: '600',
+    letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   labelSm: {

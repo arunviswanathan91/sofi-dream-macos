@@ -49,6 +49,7 @@ function InnerLayout() {
         <Stack.Screen name="customers/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="reports/index" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ presentation: 'modal', headerShown: false, animation: 'fade_from_bottom' }} />
+        <Stack.Screen name="backup/index" options={{ headerShown: false }} />
       </Stack>
     </>
   );
