@@ -1,4 +1,5 @@
 export const Colors = {
+  // Legacy palette (kept for backward compatibility)
   cream: '#FAF7F2',
   warmWhite: '#FFFCF7',
   bark: '#3D2B1F',
@@ -12,14 +13,43 @@ export const Colors = {
   border: '#E2D8CF',
   white: '#FFFFFF',
   black: '#000000',
+
+  // Stitch "Warm Artisan Editorial" tokens
+  primary: '#864D5F',
+  primaryContainer: '#C9879A',
+  onPrimary: '#FFFFFF',
+  onPrimaryContainer: '#522232',
+  tertiary: '#994530',
+  tertiaryFixed: '#FFDAD2',
+  background: '#FFF8F5',
+  surfaceLow: '#F9F2EF',
+  surfaceContainer: '#F3ECEA',
+  surfaceHigh: '#EDE7E4',
+  surfaceHighest: '#E8E1DE',
+  surfaceLowest: '#FFFFFF',
+  text: '#1D1B1A',
+  subText: '#514346',
+  outline: '#837376',
+  outlineVariant: '#D5C2C5',
+  secondary: '#625E5A',
+  secondaryContainer: '#E8E1DC',
 } as const;
 
 export const StatusColors = {
-  request: Colors.gold,
-  accepted: Colors.rose,
-  shipped: Colors.sky,
-  delivered: Colors.sage,
-  cancelled: Colors.muted,
+  request: Colors.secondary,
+  accepted: Colors.primaryContainer,
+  shipped: Colors.primary,
+  delivered: Colors.tertiary,
+  cancelled: Colors.outline,
+} as const;
+
+// Stitch semantic status colors (bg/text pairs)
+export const StatusTokens = {
+  request:   { bg: Colors.secondaryContainer, text: Colors.secondary },
+  accepted:  { bg: Colors.primaryContainer,   text: Colors.onPrimaryContainer },
+  shipped:   { bg: Colors.surfaceHighest,     text: Colors.primary },
+  delivered: { bg: Colors.tertiaryFixed,      text: Colors.tertiary },
+  cancelled: { bg: Colors.surfaceHigh,        text: Colors.subText },
 } as const;
 
 export const UrgencyColors = {
@@ -31,6 +61,7 @@ export const UrgencyColors = {
 
 export const Fonts = {
   display: 'PlayfairDisplay',
+  heading: 'PlayfairDisplay',
   body: 'DMSans',
   mono: 'DMMono',
 } as const;
@@ -49,6 +80,9 @@ export const BorderRadius = {
   md: 12,
   lg: 16,
   xl: 24,
+  card: 16,
+  cardLarge: 24,
+  pill: 999,
   full: 999,
 } as const;
 
