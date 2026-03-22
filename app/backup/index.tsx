@@ -35,7 +35,6 @@ import {
 } from '../../lib/backup';
 
 // ─── OAuth Discovery Documents ────────────────────────────────────────────────
-// Using constants instead of useAutoDiscovery to avoid network requests on mount.
 const GOOGLE_DISCOVERY: AuthSession.DiscoveryDocument = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
@@ -114,37 +113,37 @@ export default function BackupScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[st.root, { backgroundColor: colors.bg }]}>
-      <View style={[st.header, { borderBottomColor: colors.cardBorder }]}>
-        <TouchableOpacity onPress={() => router.back()} style={st.backBtn}>
-          <Text style={[st.backTxt, { color: colors.subText }]}>← Back</Text>
+    <SafeAreaView style={st.root}>
+      {/* Header */}
+      <View style={st.header}>
+        <TouchableOpacity onPress={() => router.back()} style={st.backPill}>
+          <Text style={st.backTxt}>← Back</Text>
         </TouchableOpacity>
-        <Text style={[st.title, { color: colors.text }]}>Data Backup</Text>
-        <View style={{ width: 60 }} />
+        <Text style={st.title}>Data Backup</Text>
+        <View style={{ width: 72 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
 
         {/* ── Local Backup ───────────────────────────────────────────────── */}
-        <Section label="LOCAL BACKUP" colors={colors}>
-          <Text style={[st.sectionNote, { color: colors.subText }]}>
+        <Section label="Local Backup">
+          <Text style={st.sectionNote}>
             Save a backup file to your phone. Restore it any time, or copy it
             to any cloud storage manually.
           </Text>
           <ActionRow icon="💾" title="Export to Phone"
             subtitle="Creates sofie-backup-YYYY-MM-DD.json"
-            colors={colors} loading={busyLocal === 'export'}
+            loading={busyLocal === 'export'}
             onPress={handleLocalExport} buttonLabel="Export" />
           <ActionRow icon="📂" title="Restore from File"
             subtitle="Pick a previously exported backup"
-            colors={colors} loading={busyLocal === 'import'}
+            loading={busyLocal === 'import'}
             onPress={handleLocalImport} buttonLabel="Restore" destructive />
-          <LastBackupBadge label="Last local backup" date={lastLocal} colors={colors} />
+          <LastBackupBadge label="Last local backup" date={lastLocal} />
         </Section>
 
         {/* ── Google Drive ────────────────────────────────────────────────── */}
-        {/* FIX: GoogleSection is a separate component that owns its own hook.
-            This prevents conditional hook call issues and isolates any OAuth crash. */}
+        {/* FIX: GoogleSection is a separate component that owns its own hook. */}
         <GoogleSection
           colors={colors}
           lastGDrive={lastGDrive}
@@ -158,7 +157,7 @@ export default function BackupScreen() {
           onLastOneDriveChange={setLastOneDrive}
         />
 
-        <Text style={[st.privacyNote, { color: colors.subText }]}>
+        <Text style={st.privacyNote}>
           Cloud backups use app-specific private folders. Google Drive stores
           files in AppDataFolder (not visible in Drive UI). OneDrive stores
           files in Apps/Sofi Dream. No other files are ever accessed.
@@ -175,13 +174,11 @@ function GoogleSection({
   const [googleUser, setGoogleUser] = useState<string | null>(null);
   const [busy, setBusy] = useState<'backup' | 'restore' | null>(null);
 
-  // FIX: memoize redirect URI so it's stable across renders
   const redirectUri = useMemo(
     () => AuthSession.makeRedirectUri({ scheme: 'sofi-dream', path: 'auth' }),
     [],
   );
 
-  // FIX: pass null as discovery when not configured → request stays null, no crash
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId: GOOGLE_CLIENT_ID_WEB || 'unconfigured',
@@ -249,25 +246,24 @@ function GoogleSection({
   }, []);
 
   return (
-    <Section label="GOOGLE DRIVE" colors={colors}>
+    <Section label="Google Drive">
       {!GOOGLE_CLIENT_ID_WEB ? (
         <ConfigNote
           text="Set EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB in your .env to enable Google Drive backup. Create a Web OAuth 2.0 client in Google Cloud Console and add sofi-dream://auth as an authorised redirect URI."
-          colors={colors}
         />
       ) : googleUser ? (
         <>
-          <SignedInBadge email={googleUser} onSignOut={handleSignOut} colors={colors} />
+          <SignedInBadge email={googleUser} onSignOut={handleSignOut} />
           <ActionRow icon="☁️" title="Backup to Drive" subtitle="Saves to private AppDataFolder"
-            colors={colors} loading={busy === 'backup'} onPress={handleBackup} buttonLabel="Backup" />
+            loading={busy === 'backup'} onPress={handleBackup} buttonLabel="Backup" />
           <ActionRow icon="⬇️" title="Restore from Drive" subtitle="Overwrites current data"
-            colors={colors} loading={busy === 'restore'} onPress={handleRestore}
+            loading={busy === 'restore'} onPress={handleRestore}
             buttonLabel="Restore" destructive />
-          <LastBackupBadge label="Last Drive backup" date={lastGDrive} colors={colors} />
+          <LastBackupBadge label="Last Drive backup" date={lastGDrive} />
         </>
       ) : (
         <SignInButton label="Sign in with Google" icon="G" iconColor="#EA4335"
-          loading={!request} onPress={() => promptAsync()} colors={colors} />
+          loading={!request} onPress={() => promptAsync()} />
       )}
     </Section>
   );
@@ -358,25 +354,24 @@ function OneDriveSection({
   }, []);
 
   return (
-    <Section label="MICROSOFT ONEDRIVE" colors={colors}>
+    <Section label="Microsoft OneDrive">
       {!MICROSOFT_CLIENT_ID ? (
         <ConfigNote
           text="Set EXPO_PUBLIC_MICROSOFT_CLIENT_ID in your .env to enable OneDrive backup. Register an app in Azure Portal and add sofi-dream://auth as a redirect URI."
-          colors={colors}
         />
       ) : msUser ? (
         <>
-          <SignedInBadge email={msUser} onSignOut={handleSignOut} colors={colors} />
+          <SignedInBadge email={msUser} onSignOut={handleSignOut} />
           <ActionRow icon="☁️" title="Backup to OneDrive" subtitle="Saves to private AppFolder"
-            colors={colors} loading={busy === 'backup'} onPress={handleBackup} buttonLabel="Backup" />
+            loading={busy === 'backup'} onPress={handleBackup} buttonLabel="Backup" />
           <ActionRow icon="⬇️" title="Restore from OneDrive" subtitle="Overwrites current data"
-            colors={colors} loading={busy === 'restore'} onPress={handleRestore}
+            loading={busy === 'restore'} onPress={handleRestore}
             buttonLabel="Restore" destructive />
-          <LastBackupBadge label="Last OneDrive backup" date={lastOneDrive} colors={colors} />
+          <LastBackupBadge label="Last OneDrive backup" date={lastOneDrive} />
         </>
       ) : (
         <SignInButton label="Sign in with Microsoft" icon="M" iconColor="#00A4EF"
-          loading={!request} onPress={() => promptAsync()} colors={colors} />
+          loading={!request} onPress={() => promptAsync()} />
       )}
     </Section>
   );
@@ -384,114 +379,202 @@ function OneDriveSection({
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
-function Section({ label, children, colors }: { label: string; children: React.ReactNode; colors: ThemeColors }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={st.section}>
-      <Text style={[st.secLabel, { color: colors.subText }]}>{label}</Text>
-      <View style={[st.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+      <Text style={st.secLabel}>{label}</Text>
+      {/* surfaceLowest card, no border, subtle shadow */}
+      <View style={st.card}>
         {children}
       </View>
     </View>
   );
 }
 
-function ActionRow({ icon, title, subtitle, colors, loading, onPress, buttonLabel, destructive }: {
-  icon: string; title: string; subtitle: string; colors: ThemeColors;
+function ActionRow({ icon, title, subtitle, loading, onPress, buttonLabel, destructive }: {
+  icon: string; title: string; subtitle: string;
   loading: boolean; onPress: () => void; buttonLabel: string; destructive?: boolean;
 }) {
   return (
-    <View style={[st.actionRow, { borderBottomColor: colors.cardBorder }]}>
+    <View style={st.actionRow}>
       <Text style={st.actionIcon}>{icon}</Text>
       <View style={st.actionText}>
-        <Text style={[st.actionTitle, { color: colors.text }]}>{title}</Text>
-        <Text style={[st.actionSub, { color: colors.subText }]}>{subtitle}</Text>
+        <Text style={st.actionTitle}>{title}</Text>
+        <Text style={st.actionSub}>{subtitle}</Text>
       </View>
       <TouchableOpacity onPress={onPress} disabled={loading}
-        style={[st.actionBtn, { backgroundColor: destructive ? '#E07B6A' : Colors.rose }, loading && { opacity: 0.5 }]}>
+        style={[st.actionBtn, destructive && st.actionBtnDestructive, loading && { opacity: 0.5 }]}>
         {loading
-          ? <ActivityIndicator color="#fff" size="small" />
+          ? <ActivityIndicator color={Colors.onPrimary} size="small" />
           : <Text style={st.actionBtnTxt}>{buttonLabel}</Text>}
       </TouchableOpacity>
     </View>
   );
 }
 
-function SignInButton({ label, icon, iconColor, loading, onPress, colors }: {
+function SignInButton({ label, icon, iconColor, loading, onPress }: {
   label: string; icon: string; iconColor: string;
-  loading: boolean; onPress: () => void; colors: ThemeColors;
+  loading: boolean; onPress: () => void;
 }) {
   return (
     <TouchableOpacity onPress={onPress} disabled={loading}
-      style={[st.signInBtn, { borderColor: colors.cardBorder }]} activeOpacity={0.75}>
+      style={st.signInBtn} activeOpacity={0.75}>
       <Text style={[st.signInIcon, { color: iconColor }]}>{icon}</Text>
-      <Text style={[st.signInLabel, { color: colors.text }]}>{label}</Text>
-      {loading && <ActivityIndicator color={colors.subText} size="small" style={{ marginLeft: 8 }} />}
+      <Text style={st.signInLabel}>{label}</Text>
+      {loading && <ActivityIndicator color={Colors.subText} size="small" style={{ marginLeft: 8 }} />}
     </TouchableOpacity>
   );
 }
 
-function SignedInBadge({ email, onSignOut, colors }: { email: string; onSignOut: () => void; colors: ThemeColors }) {
+function SignedInBadge({ email, onSignOut }: { email: string; onSignOut: () => void }) {
   return (
-    <View style={[st.signedRow, { borderBottomColor: colors.cardBorder }]}>
-      <Text style={[st.checkmark, { color: Colors.sage }]}>✓</Text>
-      <Text style={[st.signedEmail, { color: colors.text }]} numberOfLines={1}>{email}</Text>
+    <View style={st.signedRow}>
+      <Text style={st.checkmark}>✓</Text>
+      <Text style={st.signedEmail} numberOfLines={1}>{email}</Text>
       <TouchableOpacity onPress={onSignOut}>
-        <Text style={[st.signOutTxt, { color: colors.subText }]}>Sign out</Text>
+        <Text style={st.signOutTxt}>Sign out</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-function LastBackupBadge({ label, date, colors }: { label: string; date: string | null; colors: ThemeColors }) {
+function LastBackupBadge({ label, date }: { label: string; date: string | null }) {
   return (
-    <Text style={[st.lastDate, { color: colors.subText }]}>
+    <Text style={st.lastDate}>
       {label}: {formatBackupDate(date)}
     </Text>
   );
 }
 
-function ConfigNote({ text, colors }: { text: string; colors: ThemeColors }) {
+function ConfigNote({ text }: { text: string }) {
   return (
-    <View style={[st.configNote, { backgroundColor: colors.bg }]}>
+    <View style={st.configNote}>
       <Text style={st.configNoteIcon}>⚙️</Text>
-      <Text style={[st.configNoteTxt, { color: colors.subText }]}>{text}</Text>
+      <Text style={st.configNoteTxt}>{text}</Text>
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const st = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, backgroundColor: Colors.background },
+
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.md, paddingVertical: 12,
   },
-  backBtn: { width: 60 },
-  backTxt: { fontSize: 14, fontFamily: 'DMSans' },
-  title: { fontSize: 17, fontFamily: 'PlayfairDisplay', textAlign: 'center' },
+  backPill: {
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: BorderRadius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  backTxt: { fontSize: 13, fontFamily: 'DMSans', color: Colors.primary, fontWeight: '600' },
+  title: { fontSize: 20, fontFamily: 'PlayfairDisplay', fontWeight: '700', color: Colors.text, textAlign: 'center' },
+
   scroll: { paddingBottom: 48 },
+
   section: { paddingHorizontal: Spacing.md, marginTop: Spacing.lg },
-  secLabel: { fontSize: 11, fontFamily: 'DMSans', textTransform: 'uppercase', letterSpacing: 1.4, fontWeight: '600', marginBottom: 8 },
-  card: { borderRadius: BorderRadius.md, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  sectionNote: { fontSize: 13, fontFamily: 'DMSans', lineHeight: 19, padding: Spacing.md },
-  actionRow: { flexDirection: 'row', alignItems: 'center', padding: Spacing.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  secLabel: {
+    fontSize: 20,
+    fontFamily: 'PlayfairDisplay',
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+  },
+  card: {
+    borderRadius: BorderRadius.card,
+    backgroundColor: Colors.surfaceLowest,
+    overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.03)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  sectionNote: {
+    fontSize: 13,
+    fontFamily: 'DMSans',
+    color: Colors.subText,
+    lineHeight: 19,
+    padding: Spacing.md,
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.outlineVariant,
+  },
   actionIcon: { fontSize: 22, marginRight: 12 },
   actionText: { flex: 1 },
-  actionTitle: { fontSize: 14, fontFamily: 'DMSans', fontWeight: '600' },
-  actionSub: { fontSize: 12, fontFamily: 'DMSans', marginTop: 2 },
-  actionBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: BorderRadius.sm, minWidth: 72, alignItems: 'center' },
-  actionBtnTxt: { color: '#fff', fontFamily: 'DMSans', fontSize: 13, fontWeight: '700' },
-  signInBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: Spacing.md, paddingVertical: 14, paddingHorizontal: Spacing.md, borderRadius: BorderRadius.sm, borderWidth: 1.5 },
+  actionTitle: { fontSize: 14, fontFamily: 'DMSans', fontWeight: '600', color: Colors.text },
+  actionSub: { fontSize: 12, fontFamily: 'DMSans', marginTop: 2, color: Colors.subText },
+  actionBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.pill,
+    minWidth: 72,
+    alignItems: 'center',
+    backgroundColor: Colors.primaryContainer,
+  },
+  actionBtnDestructive: {
+    backgroundColor: Colors.surfaceHigh,
+  },
+  actionBtnTxt: { color: Colors.onPrimary, fontFamily: 'DMSans', fontSize: 13, fontWeight: '700' },
+
+  signInBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: Spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.surfaceContainer,
+  },
   signInIcon: { fontSize: 18, fontWeight: '700', marginRight: 10, fontFamily: 'DMMono' },
-  signInLabel: { fontSize: 15, fontFamily: 'DMSans', fontWeight: '600' },
-  signedRow: { flexDirection: 'row', alignItems: 'center', padding: Spacing.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  checkmark: { fontSize: 16, marginRight: 8 },
-  signedEmail: { flex: 1, fontSize: 13, fontFamily: 'DMSans' },
-  signOutTxt: { fontSize: 12, fontFamily: 'DMSans', textDecorationLine: 'underline' },
-  lastDate: { fontSize: 11, fontFamily: 'DMMono', padding: Spacing.md, paddingTop: 8 },
-  configNote: { flexDirection: 'row', alignItems: 'flex-start', margin: Spacing.md, padding: 12, borderRadius: BorderRadius.sm },
+  signInLabel: { fontSize: 15, fontFamily: 'DMSans', fontWeight: '600', color: Colors.text },
+
+  signedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.outlineVariant,
+  },
+  checkmark: { fontSize: 16, marginRight: 8, color: Colors.tertiary },
+  signedEmail: { flex: 1, fontSize: 13, fontFamily: 'DMSans', color: Colors.text },
+  signOutTxt: { fontSize: 12, fontFamily: 'DMSans', color: Colors.subText, textDecorationLine: 'underline' },
+
+  lastDate: {
+    fontSize: 11,
+    fontFamily: 'DMMono',
+    color: Colors.subText,
+    padding: Spacing.md,
+    paddingTop: 8,
+  },
+
+  configNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    margin: Spacing.md,
+    padding: 12,
+    borderRadius: BorderRadius.card,
+    backgroundColor: Colors.surfaceLow,
+  },
   configNoteIcon: { fontSize: 16, marginRight: 8, marginTop: 1 },
-  configNoteTxt: { flex: 1, fontSize: 12, fontFamily: 'DMSans', lineHeight: 18 },
-  privacyNote: { fontSize: 11, fontFamily: 'DMSans', lineHeight: 17, paddingHorizontal: Spacing.md, marginTop: Spacing.lg, textAlign: 'center' },
+  configNoteTxt: { flex: 1, fontSize: 12, fontFamily: 'DMSans', lineHeight: 18, color: Colors.subText },
+
+  privacyNote: {
+    fontSize: 11,
+    fontFamily: 'DMSans',
+    lineHeight: 17,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.lg,
+    textAlign: 'center',
+    color: Colors.subText,
+  },
 });
